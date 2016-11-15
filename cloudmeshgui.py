@@ -5,6 +5,7 @@ import tkFileDialog
 from PIL import Image,ImageTk
 from stlOper import FileOperation
 import subprocess
+from FileList import FileList
 from tkMessageBox import *
 
 import os
@@ -92,82 +93,109 @@ class StartPage(tk.Frame):
 
 class ConfigPage(tk.Frame):
 
-    filename = ''
-
     def __init__(self, parent , controller):
         tk.Frame.__init__(self, parent)
         self.parent = parent
-        self.grid(row=0,column=0,sticky=tk.NSEW)
+        self.controller = controller
+
         self.fileoper = FileOperation()
         # define options for opening or saving a file
-        self.file_opt = options = {}
+        self.initOptions()
+
+        #labels
+        self.labelFramse()
+        self.initLabels()
+        self.initScrollList()
+        self.initEntry()
+        self.initButtons()
+        self.manageGrid()
+
+
+    def initOptions(self):
+        self.fileopt = options = {}
         options['defaultextension'] = '.txt'
-        options['filetypes'] = [('Point cloud data', '.pcd'),('text files', '.txt')]
-        options['initialdir'] = 'C:\\Users\\callo\\Desktop'
+        options['filetypes'] = [('text files', '.txt'),('Point cloud data', '.pcd')]
+        options['initialdir'] = thisDir
         options['initialfile'] = ''
         options['parent'] = self
         options['title'] = 'Open file to import'
 
-        labelFrame_1 = tk.LabelFrame(self, text="Specify Txt File",height="200",padx=10,pady=10)
-        labelFrame_1.pack(fill="both",padx=5,pady=5)
+    def labelFramse(self):
+        self.labelFrame_1 = tk.LabelFrame(self, text="Specify Txt File", height=200, padx=10, pady=10)
+        self.labelFrame_2 = tk.LabelFrame(self, text="Operations", height=200, padx=10, pady=10)
+        self.labelFrame_3 = tk.LabelFrame(self, text="STL file", height=200, padx=10, pady=10)
 
-        label_1 = tk.Label(labelFrame_1, text="Txt file name", bg="white" )
-        label_1.pack(side=tk.LEFT,padx=20)
+    def initLabels(self):
+        self.label_1 = tk.Label(self.labelFrame_1, text="Txt file name", bg="white")
+        self.label_2 = tk.Label(self.labelFrame_2, text="Check file")
+        self.label_3 = tk.Label(self.labelFrame_2, text="Create STL")
+        self.label_4 = tk.Label(self.labelFrame_2, text="Import Geometry")
 
-        self.entry_1 = tk.Entry(labelFrame_1,bd=2,width=50)
-        self.entry_1.pack(side=tk.LEFT,fill=tk.X , padx=20)
+    def initEntry(self):
+        self.entry_1 = tk.Entry(self.labelFrame_1, bd=2, width=50)
 
-        im = Image.open(os.path.join(thisDir, 'assets\\open.png'))
-        photo = ImageTk.PhotoImage(im)
-        btn_1 = tk.Button(labelFrame_1, image=photo , command=self.askopenfile)
-        btn_1.image = photo
-        btn_1.pack(side=tk.LEFT,padx=5)
+    def initButtons(self):
+        im = Image.open(os.path.join(thisDir,"assets\open.png"))
+        ph = ImageTk.PhotoImage(im)
+        self.btn_1 = tk.Button(self.labelFrame_1, image=ph, command=self.askopenfile)
+        self.btn_2 = tk.Button(self.labelFrame_2, text="Valid")
+        self.btn_3 = tk.Button(self.labelFrame_2, text="OK", command=lambda: self.check_filepath(self.controller))
+        self.btn_4 = tk.Button(self.labelFrame_2, text="Import")
+        self.btn_del = tk.Button(self.labelFrame_3, text="Del" , command = self.delete )
 
-        labelFrame_2 = tk.LabelFrame(self, text="Operations" , height=100 , padx=10,pady=10)
-        labelFrame_2.pack(fill="both", padx=5,pady=5)
+        self.btn_1.image = ph
 
-        label_2 = tk.Label(labelFrame_2, text="Check file")
-        label_2.pack(side=tk.LEFT, padx=20)
-
-        btn_2 = tk.Button(labelFrame_2, text="Valid", command= lambda: self.fileoper.validate(self.filename))
-        btn_2.pack(side=tk.LEFT,padx=10)
-
-        label_2 = tk.Label(labelFrame_2, text="Create STL")
-        label_2.pack(side=tk.LEFT,padx=10)
-        btn_3 = tk.Button(labelFrame_2, text="OK", command= lambda: self.check_filepath(controller))
-        btn_3.pack(side=tk.LEFT, padx=10)
-
-        label_3 = tk.Label(labelFrame_2, text="Import Geometry")
-        label_3.pack(side=tk.LEFT, padx=10)
-
-        btn_4 = tk.Button(labelFrame_2, text="Import")
-        btn_4.pack(side=tk.LEFT, padx=10)
-
-        labelFrame_3 = tk.LabelFrame(self, text="STL file" , height=200 , padx=10, pady=10 )
-        labelFrame_3.pack(fill="both" , padx=5,pady=5)
-
-        scrollbar = tk.Scrollbar(labelFrame_3)
-        scrollbar.pack(side = tk.LEFT , fill=tk.Y, expand=True)
-
-        self.stlList = tk.Listbox(labelFrame_3, yscrollcommand= scrollbar.set)
-
-        self.stlList.pack(side = tk.LEFT , fill=tk.BOTH, expand=True)
-        scrollbar.config(command= self.stlList.yview)
-
-        #first_or_default = next((x for x in stlList if stlList[x] <> Capp.fileOperation.filename), None)
-        #if first_or_default:
-            #stlList.insert(self,0,first_or_default)
+    def initScrollList(self):
+        self.focus_box = None
+        self.scrollbar = tk.Scrollbar(self.labelFrame_3)
+       # self.stlList = tk.Listbox(self.labelFrame_3, yscrollcommand=self.scrollbar.set, width=50)
+        self.stlList = FileList(self.labelFrame_3,yscrollcommand=self.scrollbar.set, width=50)
+        self.stlList.bind("<FocusIn>", self.box_focused)
+        self.stlList.bind("<FocusOut>", self.box_unfocused)
+        self.scrollbar.config(command=self.stlList.yview)
 
 
 
+    def manageGrid(self):
+        self.labelFrame_1.grid(row=0, columnspan=8, sticky='NSWE', padx=10, pady=10)
+        self.labelFrame_2.grid(row=2, column=0, sticky="NSWE", padx=10, pady=10)
+        self.labelFrame_3.grid(row=4, column=0 , sticky="NSWE", padx=20)
+        #----------
+        self.label_1.grid(row=1,column=1,sticky="W")
+        self.label_2.grid(row=3, column=1, sticky="W", padx=10)
+        self.label_3.grid(row=3, column=4 , sticky="W", padx=10)
+        self.label_4.grid(row=3, column=6 , sticky="W", padx=10)
+        #----------
+        self.btn_1.grid(row=1, column=3, sticky="W", padx=10)
+        self.btn_2.grid(row=3, column=2, sticky="W", padx=5)
+        self.btn_3.grid(row=3, column=5, sticky="W", padx=5)
+        self.btn_4.grid(row=3, column=7, sticky="W", padx=20)
+        self.btn_del.grid(row=5,column=3, sticky="E", padx=10)
+        #----------
+        self.scrollbar.grid(rowspan=5, row=5, column=1, sticky="WE")
+        self.stlList.columnconfigure(0, weight=1)
+        self.stlList.grid(row=5,column=2 ,sticky="WE",padx=10 , pady=10)
+        #---------
+        self.entry_1.grid(row=1, column=2, sticky="E", padx=10)
+
+    def box_focused(self,event):
+        self.focus_box = event.widget
+
+    def box_unfocused(self,event):
+        self.focus_box=None
 
 
+    def delete(self):
+        if not self.focus_box: return
+        selection = self.stlList.curselection()
+        if selection:
+            self.focus_box.delete(selection[0])
 
 
 
 
     def askopenfile(self):
-        Capp.fileOperation.filename = tkFileDialog.askopenfilename(**self.file_opt)
+        Capp.fileOperation.filename = tkFileDialog.askopenfilename(**self.fileopt)
 
         if Capp.fileOperation.filename:
 
