@@ -21,7 +21,6 @@ FILEPATH = ''
 class Capp(tk.Tk):
 
     fileOperation = FileOperation()
-    print "Ss" + fileOperation.filename
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
         tk.Tk.iconbitmap(self,default=os.path.join(thisDir, 'assets\\agh.ico'))
