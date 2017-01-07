@@ -137,8 +137,13 @@ try:
 #
 finally:
     f.close()
+import json
 for key,value in fazy.iteritems():
-    w = open(key+'.txt','w')
+    with open('fazy'+key+'.txt','w') as file:
+        s =json.dump(fazy[key], file, indent=2)
+print s
+
+
     
 
 
