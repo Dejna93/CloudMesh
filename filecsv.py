@@ -137,11 +137,13 @@ try:
 #
 finally:
     f.close()
-import json
+print fazy["20"]
 for key,value in fazy.iteritems():
-    with open('fazy'+key+'.txt','w') as file:
-        s =json.dump(fazy[key], file, indent=2)
-print s
+    with open('fazy\\'+key+'.txt','w') as file:
+        for item in value:
+            file.write("{0} {1} {2}\n".format(item[0] ,item[1] , item[2]) )
+    file.close()
+
 
 
     
