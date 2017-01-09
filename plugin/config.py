@@ -22,6 +22,8 @@ class PluginConfig(object):
 
         self.current_project = self.plugin_dir + "\\workspace"
 
+        self.project_points_folder = self.current_project + "\\points"
+        self.project_stl_folder = self.current_project + "\\stl"
 
         self.icon = os.path.join(self.plugin_dir, 'assets\\agh.ico')
         self.ico_btn_open = os.path.join(self.plugin_dir, "assets\\open.png")

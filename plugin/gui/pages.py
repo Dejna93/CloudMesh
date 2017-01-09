@@ -1,6 +1,7 @@
 # coding=UTF-8
 import subprocess
 import os
+from shutil import copy2
 import Tkinter as tk
 import tkFileDialog
 from PIL import Image, ImageTk
@@ -43,8 +44,9 @@ class StartPage(tk.Frame):
         self.label_work = tk.Label(self.workspace_frame, text="Set workscape")
         self.label_work.grid(row=0, column=0)
 
-        self.btn_workspace = tk.Button(self.workspace_frame, image=global_vars.tk_img_open  , command=self.ask_open_workspace)
-        self.btn_workspace.grid(row=0 , column=1)
+        self.btn_workspace = tk.Button(self.workspace_frame, image=global_vars.tk_img_open,
+                                       command=self.ask_open_workspace)
+        self.btn_workspace.grid(row=0, column=1)
         self.btn_workspace.image = global_vars.tk_img_open
 
     def ask_open_workspace(self):
@@ -55,6 +57,7 @@ class StartPage(tk.Frame):
         options['title'] = 'Choice your workspace'
         folder = tkFileDialog.askdirectory(**dir_opt)
         print folder
+
 
 class ConfigPage(tk.Frame):
     def __init__(self, parent, controller):
@@ -99,8 +102,8 @@ class ConfigPage(tk.Frame):
         self.entry_1 = tk.Entry(self.labelFrame_1, bd=2, width=50)
 
     def initButtons(self):
-        #im = Image.open(global_vars.ico_btn_open)
-       # ph = ImageTk.PhotoImage(im)
+        # im = Image.open(global_vars.ico_btn_open)
+        # ph = ImageTk.PhotoImage(im)
 
         self.btn_1 = tk.Button(self.labelFrame_1, image=global_vars.tk_img_open, command=self.askopenfile)
         self.btn_3 = tk.Button(self.labelFrame_2, text="OK", command=lambda: self.pre_converting(
@@ -130,7 +133,6 @@ class ConfigPage(tk.Frame):
                 self.txt_list.insert(0, self.get_filename_from_path(files))
 
         self.txt_list.bind('<Button-1>', self.multi_select)
-
 
     def manageGrid(self):
         self.labelFrame_1.grid(row=0, columnspan=8, sticky='WE', padx=10, pady=10)
@@ -174,10 +176,17 @@ class ConfigPage(tk.Frame):
         print global_vars.files_selected
 
     def askopenfile(self):
-        global_vars.current_filename = tkFileDialog.askopenfilename(**self.fileopt)
+        ##TODO dodaj obsluge kopiowania do katalogu projektu
+        add_file = tkFileDialog.askopenfilename(**self.fileopt)
+
+        if not os.path.exists(global_vars.project_points_folder + self.get_filename_from_path(add_file)):
+            copy2(add_file, global_vars.project_points_folder +"\\"+ self.get_filename_from_path(add_file))
+            global_vars.current_filename = global_vars.project_points_folder + "\\"+self.get_filename_from_path(add_file)
+        else:
+            global_vars.current_filename = add_file
 
         if global_vars.current_filename:
-            if not global_vars.current_filename in global_vars.files_opened:
+            if not add_file in global_vars.files_opened:
                 global_vars.files_opened.append(global_vars.current_filename)
 
             self.set_entry(global_vars.current_filename)
@@ -261,7 +270,7 @@ class STLPage(tk.Frame):
 
     def stl_run(self):
         if global_vars.current_filename[-3:] == "txt":
-         #   filename = App.fileOperation.txtTopcd(global_vars.current_filename)
-           # subprocess.check_call([os.path.join(, 'stl_triangulation.exe'), '--file', filename])
+            #   filename = App.fileOperation.txtTopcd(global_vars.current_filename)
+            # subprocess.check_call([os.path.join(, 'stl_triangulation.exe'), '--file', filename])
             print "Finish create stl"
-        # subprocess.call(['stl_triangulation.exe ', '--file',FILEPATH], shell=False)
+            # subprocess.call(['stl_triangulation.exe ', '--file',FILEPATH], shell=False)
