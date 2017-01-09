@@ -51,6 +51,7 @@ class ConfigPage(tk.Frame):
         self.labelFramse()
         self.initLabels()
         self.initScrollList()
+        self.initTxtScrollList()
         self.initEntry()
         self.initButtons()
         self.manageGrid()
@@ -82,7 +83,7 @@ class ConfigPage(tk.Frame):
         ph = ImageTk.PhotoImage(im)
 
         self.btn_1 = tk.Button(self.labelFrame_1, image=ph, command=self.askopenfile)
-        self.btn_3 = tk.Button(self.labelFrame_2, text="OK", command=lambda: self.check_filepath(self.controller))
+        self.btn_3 = tk.Button(self.labelFrame_2, text="OK", command=lambda: self.pre_converting(self.controller))#self.check_filepath(self.controller))
         self.btn_4 = tk.Button(self.labelFrame_2, text="Import")
         self.btn_del = tk.Button(self.labelFrame_3, text="Del", command=self.delete)
 
@@ -91,11 +92,20 @@ class ConfigPage(tk.Frame):
     def initScrollList(self):
         self.focus_box = None
         self.scrollbar = tk.Scrollbar(self.labelFrame_3)
-        # self.stlList = tk.Listbox(self.labelFrame_3, yscrollcommand=self.scrollbar.set, width=50)
-        self.stlList = FileList(self.labelFrame_3, yscrollcommand=self.scrollbar.set, width=50)
+        self.stlList = tk.Listbox(self.labelFrame_3, yscrollcommand=self.scrollbar.set, width=30)
+        #self.stlList = FileList(self.labelFrame_3, yscrollcommand=self.scrollbar.set, width=50)
         self.stlList.bind("<FocusIn>", self.box_focused)
         self.stlList.bind("<FocusOut>", self.box_unfocused)
         self.scrollbar.config(command=self.stlList.yview)
+
+    def initTxtScrollList(self):
+        self.txt_focus_box = None
+        self.txt_scrollbar = tk.Scrollbar(self.labelFrame_3)
+        self.txt_list = tk.Listbox(self.labelFrame_3,selectmode='multiple', yscrollcommand=self.txt_scrollbar.set, width=30)
+        self.txt_scrollbar.config(command=self.txt_list.yview)
+        self.txt_list.bind('<Button-1>', self.multi_select)
+        global_vars.files_selected = self.txt_list.curselection()
+
 
     def manageGrid(self):
         self.labelFrame_1.grid(row=0, columnspan=8, sticky='WE', padx=10, pady=10)
@@ -109,11 +119,14 @@ class ConfigPage(tk.Frame):
         self.btn_1.grid(row=1, column=3, sticky="W", padx=10)
         self.btn_3.grid(row=3, column=5, sticky="W", padx=5)
         self.btn_4.grid(row=3, column=7, sticky="W", padx=20)
-        self.btn_del.grid(row=5, column=3, sticky="E", padx=10)
+        self.btn_del.grid(row=5, column=5, sticky="E", padx=10)
         # ----------
-        self.scrollbar.grid(rowspan=5, row=5, column=1, sticky="WE")
+        self.scrollbar.grid(rowspan=2, row=5, column=4, sticky="WE")
         self.stlList.columnconfigure(0, weight=1)
-        self.stlList.grid(row=5, column=2, sticky="WE", padx=10, pady=10)
+        self.stlList.grid(row=5, column=3, sticky="WE", padx=10, pady=10)
+
+        self.txt_scrollbar.grid(row=5,column=1,sticky="WE")
+        self.txt_list.grid(row=5,column=2, sticky="WE", padx=10, pady=10)
         # ---------
         self.entry_1.grid(row=1, column=2, sticky="E", padx=10)
 
@@ -130,16 +143,21 @@ class ConfigPage(tk.Frame):
         if selection:
             self.focus_box.delete(selection[0])
 
+    def multi_select(self,event):
+        print self.txt_list.curselection()
+        global_vars.files_selected = self.txt_list.curselection()
+        print global_vars.files_selected
+
     def askopenfile(self):
         global_vars.current_filename = tkFileDialog.askopenfilename(**self.fileopt)
 
         if global_vars.current_filename:
-            if not global_vars.current_filename in global_vars.files_selecteced:
-                global_vars.files_selecteced.append(global_vars.current_filename)
+            if not global_vars.current_filename in global_vars.files_opened:
+                global_vars.files_opened.append(global_vars.current_filename)
 
             self.set_entry(global_vars.current_filename)
-            self.stlList.insert(0, self.get_filename_from_path(global_vars.current_filename))
-            return open(global_vars.current_filename, 'r')
+            self.txt_list.insert(0, self.get_filename_from_path(global_vars.current_filename))
+            #return open(global_vars.current_filename, 'r')
 
 
     def get_filename_from_path(self, filepath):
@@ -153,6 +171,9 @@ class ConfigPage(tk.Frame):
     def check_filepath(self, controller):
         if global_vars.current_filename:
             controller.show_frame("STLPage")
+
+    def pre_converting(self,controller):
+        print "controller"
 
     def opennew(self):
         print "opening"

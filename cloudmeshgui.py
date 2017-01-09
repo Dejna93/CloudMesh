@@ -136,11 +136,9 @@ class STLPage(tk.Frame):
 
     def stl_run(self):
 
-        filename = global_vars.current_filename
         if global_vars.current_filename[-3:] == "txt":
             filename = App.fileOperation.txtTopcd(global_vars.current_filename)
-
-        subprocess.check_call([os.path.join(thisDir, 'stl_triangulation.exe'), '--file', filename])
+            subprocess.check_call([os.path.join(thisDir, 'stl_triangulation.exe'), '--file', filename])
         print "Finish create stl"
         #subprocess.call(['stl_triangulation.exe ', '--file',FILEPATH], shell=False)
 

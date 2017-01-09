@@ -21,8 +21,8 @@ class PluginConfig(object):
 
         self.title = "Import Mesh to Abaqus"
 
-        self.files_selecteced = []
-
+        self.files_selected = []
+        self.files_opened = []
         self.current_filename = ''
         self.created_stl = []
 
