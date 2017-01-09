@@ -9,7 +9,7 @@ from FileList import FileList
 from tkMessageBox import *
 
 from plugin.config import global_vars
-
+from plugin.utils.project import open_project
 
 class StartPage(tk.Frame):
     def __init__(self, parent, controller):
@@ -45,18 +45,12 @@ class StartPage(tk.Frame):
         self.label_work.grid(row=0, column=0)
 
         self.btn_workspace = tk.Button(self.workspace_frame, image=global_vars.tk_img_open,
-                                       command=self.ask_open_workspace)
+                                       command=open_project)
         self.btn_workspace.grid(row=0, column=1)
         self.btn_workspace.image = global_vars.tk_img_open
 
-    def ask_open_workspace(self):
-        dir_opt = options = {}
-        options['initialdir'] = global_vars.workspace_dir
-        options['mustexist'] = True
-        options['parent'] = self.parent
-        options['title'] = 'Choice your workspace'
-        folder = tkFileDialog.askdirectory(**dir_opt)
-        print folder
+
+
 
 
 class ConfigPage(tk.Frame):
@@ -64,7 +58,9 @@ class ConfigPage(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.parent = parent
         self.controller = controller
+        #global_vars.dump_vars()
 
+        self.focus_box = None
         # self.fileoper = FileOperation()
         # define options for opening or saving a file
         self.initOptions()
@@ -114,7 +110,7 @@ class ConfigPage(tk.Frame):
         self.btn_1.image = global_vars.img_open_btn
 
     def initScrollList(self):
-        self.focus_box = None
+
         self.scrollbar = tk.Scrollbar(self.labelFrame_3)
         self.stlList = tk.Listbox(self.labelFrame_3, yscrollcommand=self.scrollbar.set, width=30)
         # self.stlList = FileList(self.labelFrame_3, yscrollcommand=self.scrollbar.set, width=50)
@@ -123,11 +119,13 @@ class ConfigPage(tk.Frame):
         self.scrollbar.config(command=self.stlList.yview)
 
     def initTxtScrollList(self):
-        self.txt_focus_box = None
+
         self.txt_scrollbar = tk.Scrollbar(self.labelFrame_3)
         self.txt_list = tk.Listbox(self.labelFrame_3, selectmode='multiple', yscrollcommand=self.txt_scrollbar.set,
                                    width=30)
         self.txt_scrollbar.config(command=self.txt_list.yview)
+        self.txt_list.bind("<FocusIn>", self.box_focused)
+        self.txt_list.bind("<FocusOut>", self.box_unfocused)
         if global_vars.files_opened:
             for files in global_vars.files_opened:
                 self.txt_list.insert(0, self.get_filename_from_path(files))
@@ -164,6 +162,7 @@ class ConfigPage(tk.Frame):
         self.focus_box = None
 
     def delete(self):
+
         if not self.focus_box:
             pass
         selection = self.stlList.curselection()
@@ -171,26 +170,27 @@ class ConfigPage(tk.Frame):
             self.focus_box.delete(selection[0])
 
     def multi_select(self, event):
-        print self.txt_list.curselection()
+        #print self.txt_list.curselection()
         global_vars.files_selected = self.txt_list.curselection()
-        print global_vars.files_selected
+       # print global_vars.files_selected
 
     def askopenfile(self):
         ##TODO dodaj obsluge kopiowania do katalogu projektu
+       # global_vars.dump_vars()
         add_file = tkFileDialog.askopenfilename(**self.fileopt)
-
         if not os.path.exists(global_vars.project_points_folder + self.get_filename_from_path(add_file)):
-            copy2(add_file, global_vars.project_points_folder +"\\"+ self.get_filename_from_path(add_file))
-            global_vars.current_filename = global_vars.project_points_folder + "\\"+self.get_filename_from_path(add_file)
+            #print "Coping " + add_file +" to " + global_vars.project_points_folder + "/"+self.get_filename_from_path(add_file)
+            copy2(add_file, global_vars.project_points_folder)
+            global_vars.current_filename = global_vars.project_points_folder + "/"+self.get_filename_from_path(add_file)
         else:
             global_vars.current_filename = add_file
 
         if global_vars.current_filename:
-            if not add_file in global_vars.files_opened:
+            if not global_vars.current_filename in global_vars.files_opened:
                 global_vars.files_opened.append(global_vars.current_filename)
 
-            self.set_entry(global_vars.current_filename)
-            self.txt_list.insert(0, self.get_filename_from_path(global_vars.current_filename))
+        self.set_entry(global_vars.current_filename)
+        self.txt_list.insert(0, self.get_filename_from_path(global_vars.current_filename))
             # return open(global_vars.current_filename, 'r')
 
     def get_filename_from_path(self, filepath):

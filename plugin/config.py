@@ -1,11 +1,24 @@
 from __future__ import with_statement
 import os
 from PIL import Image, ImageTk
+
+
+class Singelton(type):
+    def __init__(cls , name , bases , dict):
+        super(Singelton, cls).__init__(name,bases,dict)
+        cls.instance = None
+    def __call__(cls, *args, **kwargs):
+        if cls.instance is None:
+            cls.instance = super(Singelton, cls).__call__(*args,**kwargs)
+        return cls.instance
+
+
 class PluginConfig(object):
 
-    instance = None
+    __metaclass__ = Singelton
 
     def __init__(self,*args, **kwargs):
+
 
         for key, value in kwargs.iteritems():
             self.__dict__[key] = value
@@ -22,8 +35,8 @@ class PluginConfig(object):
 
         self.current_project = self.plugin_dir + "\\workspace"
 
-        self.project_points_folder = self.current_project + "\\points"
-        self.project_stl_folder = self.current_project + "\\stl"
+        self.project_points_folder = ""
+        self.project_stl_folder = ""
 
         self.icon = os.path.join(self.plugin_dir, 'assets\\agh.ico')
         self.ico_btn_open = os.path.join(self.plugin_dir, "assets\\open.png")
@@ -53,9 +66,10 @@ class PluginConfig(object):
         self.tk_img_open = ImageTk.PhotoImage(self.img_open_btn)
 
     def dump_vars(self):
-        print "WINDOW WIDHT" + str(self.window_width)
-        print "WINDOW HEIGHT" + str(self.window_height)
-        print "PLUGIN DIR" + str(self.plugin_dir)
+        print "WORKSPACE DIR" + str(self.workspace_dir)
+        print "PLUGIN DIR" + str(self.current_project)
+        print "POINTS DIR" + str(self.project_points_folder)
+        print "STL DIR" + str(self.project_stl_folder)
 
     def dump_last_project(self):
         with open(self.workspace_dir + "\\plugin.ini", "w") as file:
@@ -97,4 +111,5 @@ class PluginConfig(object):
 
 
 global_vars = PluginConfig()
+
 

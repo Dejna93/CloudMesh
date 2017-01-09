@@ -10,9 +10,8 @@ from tkMessageBox import *
 
 import os
 
+from plugin.utils.project import add_project,open_project
 from plugin.config import global_vars
-from plugin.gui.tk_elements import GuiMenu
-from plugin.utils.project import  add_project,open_project
 #pages
 from plugin.gui.pages import StartPage, ConfigPage, STLPage
 
@@ -32,23 +31,17 @@ class App(tk.Tk):
         container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
 
+        global_vars.dump_vars()
         global_vars.setup_images()
 
-        #self.menu_main = GuiMenu(container)
+        self.menubar = tk.Menu(self)
+        self.file_menu = tk.Menu(self.menubar, tearoff=0)
+        self.file_menu.add_command(label="New Project", command=add_project)
+        self.file_menu.add_command(label="Open Project" , command=open_project)
+        self.file_menu.add_command(label="Exit")
+        self.menubar.add_cascade(label="Project", menu=self.file_menu)
 
-        menu = tk.Menu(self)
-        self.config(menu=menu)
-
-        file = tk.Menu(menu)
-        file.add_command(label="New project", command=lambda : add_project(self))
-        file.add_command(label="Open project", command= lambda : open_project(self))
-        file.add_command(label="Exit")
-        #
-        help = tk.Menu(menu)
-        help.add_command(label="Help")
-        #
-        menu.add_cascade(label="File", menu=file)
-        menu.add_cascade(label="Help", menu=help)
+        self.config(menu=self.menubar)
 
         self.frames = {}
 
@@ -76,5 +69,5 @@ def run_gui():
 
 if __name__ == "__main__":
     print "RUNNING IN DEBUG MODE!"
-    global_vars.dump_vars()
+    #global_vars.dump_vars()
     run_gui()
