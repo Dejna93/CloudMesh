@@ -121,7 +121,7 @@ class FileExtension(object):
         return self.file_type[_index]
 
 
-
+"""
 f = open('microstructure.csv','rt')
 points = []
 fazy = {}
@@ -143,7 +143,7 @@ for key,value in fazy.iteritems():
         for item in value:
             file.write("{0} {1} {2}\n".format(item[0] ,item[1] , item[2]) )
     file.close()
-
+"""
 
 
     

@@ -12,9 +12,10 @@ import os
 
 from plugin.config import global_vars
 from plugin.gui.tk_elements import GuiMenu
-
+from plugin.utils.project import  add_project,open_project
 #pages
 from plugin.gui.pages import StartPage, ConfigPage, STLPage
+
 
 
 class App(tk.Tk):
@@ -22,30 +23,32 @@ class App(tk.Tk):
     fileOperation = FileOperation()
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
-
         tk.Tk.iconbitmap(self,default=global_vars.icon)
         tk.Tk.wm_title(self,global_vars.title)
-
+        self.protocol("WM_DELETE_WINDOW", self.quit)
         container = tk.Frame(self)
 
         container.pack(side="top",fill="both", expand=True)
         container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
 
-        self.menu_main = GuiMenu(container)
+        global_vars.setup_images()
 
-       # menu = tk.Menu(self)
-        self.config(menu=self.menu_main.get_main_menu())
+        #self.menu_main = GuiMenu(container)
 
-        # file = tk.Menu(menu)
-        # file.add_command(label="Open")
-        # file.add_command(label="Exit")
+        menu = tk.Menu(self)
+        self.config(menu=menu)
+
+        file = tk.Menu(menu)
+        file.add_command(label="New project", command=lambda : add_project(self))
+        file.add_command(label="Open project", command= lambda : open_project(self))
+        file.add_command(label="Exit")
         #
-        # help = tk.Menu(menu)
-        # help.add_command(label="Help")
+        help = tk.Menu(menu)
+        help.add_command(label="Help")
         #
-        # menu.add_cascade(label="File", menu=file)
-        # menu.add_cascade(label="Help", menu=help)
+        menu.add_cascade(label="File", menu=file)
+        menu.add_cascade(label="Help", menu=help)
 
         self.frames = {}
 
@@ -62,9 +65,8 @@ class App(tk.Tk):
         frame.tkraise()
 
     def quit(self):
-        tk.Tk.destroy()
-
-
+        global_vars.dump_last_project()
+        self.destroy()
 
 
 def run_gui():

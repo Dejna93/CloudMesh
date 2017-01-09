@@ -3,7 +3,7 @@ import subprocess
 import os
 import Tkinter as tk
 import tkFileDialog
-from PIL import Image,ImageTk
+from PIL import Image, ImageTk
 from FileList import FileList
 from tkMessageBox import *
 
@@ -36,6 +36,25 @@ class StartPage(tk.Frame):
         button2 = tk.Button(self.start_labelframe, text="Quit", command=lambda: StartPage.quit(self))
         button2.grid(row=1, column=2)
 
+        self.workspace_frame = tk.LabelFrame(self, text="Choice workspace", height=global_vars.dlab_height, padx=10,
+                                             pady=10)
+        self.workspace_frame.grid(row=2, column=0, sticky="WE")
+
+        self.label_work = tk.Label(self.workspace_frame, text="Set workscape")
+        self.label_work.grid(row=0, column=0)
+
+        self.btn_workspace = tk.Button(self.workspace_frame, image=global_vars.tk_img_open  , command=self.ask_open_workspace)
+        self.btn_workspace.grid(row=0 , column=1)
+        self.btn_workspace.image = global_vars.tk_img_open
+
+    def ask_open_workspace(self):
+        dir_opt = options = {}
+        options['initialdir'] = global_vars.workspace_dir
+        options['mustexist'] = True
+        options['parent'] = self.parent
+        options['title'] = 'Choice your workspace'
+        folder = tkFileDialog.askdirectory(**dir_opt)
+        print folder
 
 class ConfigPage(tk.Frame):
     def __init__(self, parent, controller):
@@ -43,7 +62,7 @@ class ConfigPage(tk.Frame):
         self.parent = parent
         self.controller = controller
 
-        #self.fileoper = FileOperation()
+        # self.fileoper = FileOperation()
         # define options for opening or saving a file
         self.initOptions()
 
@@ -59,14 +78,15 @@ class ConfigPage(tk.Frame):
     def initOptions(self):
         self.fileopt = options = {}
         options['defaultextension'] = '.txt'
-        options['filetypes'] = [('text files', '.txt'), ('Csv files','.csv'),('Point cloud data', '.pcd')]
+        options['filetypes'] = [('text files', '.txt'), ('Csv files', '.csv'), ('Point cloud data', '.pcd')]
         options['initialdir'] = global_vars.plugin_dir
         options['initialfile'] = ''
         options['parent'] = self
         options['title'] = 'Open file to import'
 
     def labelFramse(self):
-        self.labelFrame_1 = tk.LabelFrame(self, text="Specify Txt File", height=global_vars.dlab_height, padx=10, pady=10)
+        self.labelFrame_1 = tk.LabelFrame(self, text="Specify Txt File", height=global_vars.dlab_height, padx=10,
+                                          pady=10)
         self.labelFrame_2 = tk.LabelFrame(self, text="Operations", height=global_vars.dlab_height, padx=10, pady=10)
         self.labelFrame_3 = tk.LabelFrame(self, text="STL file", height=global_vars.dlab_height, padx=10, pady=10)
 
@@ -79,21 +99,22 @@ class ConfigPage(tk.Frame):
         self.entry_1 = tk.Entry(self.labelFrame_1, bd=2, width=50)
 
     def initButtons(self):
-        im = Image.open(global_vars.ico_btn_open)
-        ph = ImageTk.PhotoImage(im)
+        #im = Image.open(global_vars.ico_btn_open)
+       # ph = ImageTk.PhotoImage(im)
 
-        self.btn_1 = tk.Button(self.labelFrame_1, image=ph, command=self.askopenfile)
-        self.btn_3 = tk.Button(self.labelFrame_2, text="OK", command=lambda: self.pre_converting(self.controller))#self.check_filepath(self.controller))
+        self.btn_1 = tk.Button(self.labelFrame_1, image=global_vars.tk_img_open, command=self.askopenfile)
+        self.btn_3 = tk.Button(self.labelFrame_2, text="OK", command=lambda: self.pre_converting(
+            self.controller))  # self.check_filepath(self.controller))
         self.btn_4 = tk.Button(self.labelFrame_2, text="Import")
         self.btn_del = tk.Button(self.labelFrame_3, text="Del", command=self.delete)
 
-        self.btn_1.image = ph
+        self.btn_1.image = global_vars.img_open_btn
 
     def initScrollList(self):
         self.focus_box = None
         self.scrollbar = tk.Scrollbar(self.labelFrame_3)
         self.stlList = tk.Listbox(self.labelFrame_3, yscrollcommand=self.scrollbar.set, width=30)
-        #self.stlList = FileList(self.labelFrame_3, yscrollcommand=self.scrollbar.set, width=50)
+        # self.stlList = FileList(self.labelFrame_3, yscrollcommand=self.scrollbar.set, width=50)
         self.stlList.bind("<FocusIn>", self.box_focused)
         self.stlList.bind("<FocusOut>", self.box_unfocused)
         self.scrollbar.config(command=self.stlList.yview)
@@ -101,10 +122,14 @@ class ConfigPage(tk.Frame):
     def initTxtScrollList(self):
         self.txt_focus_box = None
         self.txt_scrollbar = tk.Scrollbar(self.labelFrame_3)
-        self.txt_list = tk.Listbox(self.labelFrame_3,selectmode='multiple', yscrollcommand=self.txt_scrollbar.set, width=30)
+        self.txt_list = tk.Listbox(self.labelFrame_3, selectmode='multiple', yscrollcommand=self.txt_scrollbar.set,
+                                   width=30)
         self.txt_scrollbar.config(command=self.txt_list.yview)
+        if global_vars.files_opened:
+            for files in global_vars.files_opened:
+                self.txt_list.insert(0, self.get_filename_from_path(files))
+
         self.txt_list.bind('<Button-1>', self.multi_select)
-        global_vars.files_selected = self.txt_list.curselection()
 
 
     def manageGrid(self):
@@ -125,8 +150,8 @@ class ConfigPage(tk.Frame):
         self.stlList.columnconfigure(0, weight=1)
         self.stlList.grid(row=5, column=3, sticky="WE", padx=10, pady=10)
 
-        self.txt_scrollbar.grid(row=5,column=1,sticky="WE")
-        self.txt_list.grid(row=5,column=2, sticky="WE", padx=10, pady=10)
+        self.txt_scrollbar.grid(row=5, column=1, sticky="WE")
+        self.txt_list.grid(row=5, column=2, sticky="WE", padx=10, pady=10)
         # ---------
         self.entry_1.grid(row=1, column=2, sticky="E", padx=10)
 
@@ -143,7 +168,7 @@ class ConfigPage(tk.Frame):
         if selection:
             self.focus_box.delete(selection[0])
 
-    def multi_select(self,event):
+    def multi_select(self, event):
         print self.txt_list.curselection()
         global_vars.files_selected = self.txt_list.curselection()
         print global_vars.files_selected
@@ -157,13 +182,13 @@ class ConfigPage(tk.Frame):
 
             self.set_entry(global_vars.current_filename)
             self.txt_list.insert(0, self.get_filename_from_path(global_vars.current_filename))
-            #return open(global_vars.current_filename, 'r')
-
+            # return open(global_vars.current_filename, 'r')
 
     def get_filename_from_path(self, filepath):
         import ntpath
         head, tail = ntpath.split(filepath)
         return tail
+
     def set_entry(self, text):
         self.entry_1.delete(0, tk.END)
         self.entry_1.insert(0, text)
@@ -172,7 +197,7 @@ class ConfigPage(tk.Frame):
         if global_vars.current_filename:
             controller.show_frame("STLPage")
 
-    def pre_converting(self,controller):
+    def pre_converting(self, controller):
         print "controller"
 
     def opennew(self):
@@ -180,23 +205,21 @@ class ConfigPage(tk.Frame):
 
 
 class STLPage(tk.Frame):
-
-    def __init__(self,parent , controller):
+    def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
 
-        labelFrame = tk.LabelFrame(self,text="Triangulation options", height=200,padx=10, pady=10)
-        labelFrame.grid(row=0 , columnspan=7, sticky='W', padx=5,pady=5, ipadx=5,ipady=5)
-
+        labelFrame = tk.LabelFrame(self, text="Triangulation options", height=200, padx=10, pady=10)
+        labelFrame.grid(row=0, columnspan=7, sticky='W', padx=5, pady=5, ipadx=5, ipady=5)
 
         self.maxNearNeigh = tk.DoubleVar()
         self.Mu = tk.DoubleVar()
-        self.searchRadius =tk.DoubleVar()
-        self.minAngle =tk.DoubleVar()
+        self.searchRadius = tk.DoubleVar()
+        self.minAngle = tk.DoubleVar()
         self.maxAngle = tk.DoubleVar()
         self.maxSurfAgle = tk.DoubleVar()
         self.normalCons = tk.IntVar()
-        #LABELS STL
-        label_1 = tk.Label(labelFrame,text="setMaximumNearestNeighbors")
+        # LABELS STL
+        label_1 = tk.Label(labelFrame, text="setMaximumNearestNeighbors")
         label_2 = tk.Label(labelFrame, text="setMu")
         label_3 = tk.Label(labelFrame, text="setSearchRadius")
         label_4 = tk.Label(labelFrame, text="setMinimumAngle")
@@ -204,23 +227,23 @@ class STLPage(tk.Frame):
         label_6 = tk.Label(labelFrame, text="setMaximumSurfaceAgle")
         label_7 = tk.Label(labelFrame, text="setNormalConsistency")
 
-        #LOCALISATION
-        label_1.grid(row=1,column=0 ,sticky="W")
-        label_2.grid(row=2,column=0 ,sticky="W")
-        label_3.grid(row=3,column=0 ,sticky="W")
+        # LOCALISATION
+        label_1.grid(row=1, column=0, sticky="W")
+        label_2.grid(row=2, column=0, sticky="W")
+        label_3.grid(row=3, column=0, sticky="W")
         label_4.grid(row=4, column=0, sticky="W")
         label_5.grid(row=5, column=0, sticky="W")
         label_6.grid(row=6, column=0, sticky="W")
         label_7.grid(row=7, column=0, sticky="W")
 
-        #DEF Entry
+        # DEF Entry
         entry_1 = tk.Entry(labelFrame)
         entry_2 = tk.Entry(labelFrame)
         entry_3 = tk.Entry(labelFrame)
         entry_4 = tk.Entry(labelFrame)
         entry_5 = tk.Entry(labelFrame)
         entry_6 = tk.Entry(labelFrame)
-        entry_7 = tk.Checkbutton(labelFrame, onvalue=1 , offvalue=1 , variable=self.normalCons)
+        entry_7 = tk.Checkbutton(labelFrame, onvalue=1, offvalue=1, variable=self.normalCons)
 
         entry_1.grid(row=1, column=1, sticky="W")
         entry_2.grid(row=2, column=1, sticky="W")
@@ -230,19 +253,15 @@ class STLPage(tk.Frame):
         entry_6.grid(row=6, column=1, sticky="W")
         entry_7.grid(row=7, column=1, sticky="W")
 
-        #BTN
-        button_1 = tk.Button(labelFrame, text="Make STL", command=lambda : self.stl_run())
-        button_2 = tk.Button(labelFrame, text="Back" , command=lambda : controller.show_frame("ConfigPage"))
-        button_1.grid(row=9 , column=2 , sticky="W")
-        button_2.grid(row=9, column=3 , sticky="E")
-
-
+        # BTN
+        button_1 = tk.Button(labelFrame, text="Make STL", command=lambda: self.stl_run())
+        button_2 = tk.Button(labelFrame, text="Back", command=lambda: controller.show_frame("ConfigPage"))
+        button_1.grid(row=9, column=2, sticky="W")
+        button_2.grid(row=9, column=3, sticky="E")
 
     def stl_run(self):
-
         if global_vars.current_filename[-3:] == "txt":
-            filename = App.fileOperation.txtTopcd(global_vars.current_filename)
-            subprocess.check_call([os.path.join(thisDir, 'stl_triangulation.exe'), '--file', filename])
-        print "Finish create stl"
-        #subprocess.call(['stl_triangulation.exe ', '--file',FILEPATH], shell=False)
-
+         #   filename = App.fileOperation.txtTopcd(global_vars.current_filename)
+           # subprocess.check_call([os.path.join(, 'stl_triangulation.exe'), '--file', filename])
+            print "Finish create stl"
+        # subprocess.call(['stl_triangulation.exe ', '--file',FILEPATH], shell=False)
