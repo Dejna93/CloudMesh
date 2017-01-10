@@ -41,17 +41,19 @@ class PluginConfig(object):
         self.icon = os.path.join(self.plugin_dir, 'assets\\agh.ico')
         self.ico_btn_open = os.path.join(self.plugin_dir, "assets\\open.png")
 
-        self.title = "Import Mesh to Abaqus"
-
         self.files_selected = []
         self.files_opened = []
         self.current_filename = ''
         self.created_stl = []
 
+        self.created_pcd = []
+
         self.stl_param = []
 
         self.setup_workspace()
         self.init_project()
+
+        self.title = "Import Mesh to Abaqus" + " - Project -" + '/'.join(self.current_project.split('/')[-4:])
 
     def setup_workspace(self):
         try:
@@ -107,11 +109,12 @@ class PluginConfig(object):
             print "Plugin.ini not found"
         try:
             if canContinue:
-                with open(os.path.join( self.current_project ,"\\project.ini"),"r") as file:
+                with open(os.path.join( self.current_project ,"project.ini"),"r") as file:
                     for line in file.readlines():
                         print line
                         if line[:6] =='files=' and len(line) != 6:
                             self.files_opened = line[6:].split(';')
+                            self.current_filename = self.files_opened[0]
                             print self.files_opened
                     file.close()
         except EnvironmentError:
@@ -125,7 +128,6 @@ class PluginConfig(object):
         for file_name in self.files_opened:
             #print file_name[-len(name):] + " " + name
             if file_name[-len(name):] == name:
-                print "COMBOBOOO"
                 self.files_opened.remove(file_name)
         print self.files_opened
 

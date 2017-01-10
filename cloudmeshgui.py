@@ -1,14 +1,6 @@
 # coding=UTF-8
 import Tkinter as tk
-import ttk as ttk
-import tkFileDialog
-from PIL import Image,ImageTk
 from stlOper import FileOperation
-import subprocess
-from FileList import FileList
-from tkMessageBox import *
-
-import os
 
 from plugin.utils.project import add_project,open_project
 from plugin.config import global_vars
@@ -31,7 +23,7 @@ class App(tk.Tk):
         container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
 
-        global_vars.dump_vars()
+       # global_vars.dump_vars()
         global_vars.setup_images()
 
         self.menubar = tk.Menu(self)

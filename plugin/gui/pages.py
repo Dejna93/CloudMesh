@@ -4,12 +4,10 @@ import os
 from shutil import copy2
 import Tkinter as tk
 import tkFileDialog
-from PIL import Image, ImageTk
-from FileList import FileList
-from tkMessageBox import *
 from tkMessageBox import showerror
 from plugin.config import global_vars
 from plugin.utils.project import open_project
+from plugin.utils.converter import convert_txt_to_pcd , convert_csv_to_pcd
 
 
 class StartPage(tk.Frame):
@@ -96,6 +94,8 @@ class ConfigPage(tk.Frame):
 
     def initEntry(self):
         self.entry_1 = tk.Entry(self.labelFrame_1, bd=2, width=50)
+        if global_vars.current_filename:
+            self.entry_1.insert(0,global_vars.current_filename)
 
     def initButtons(self):
         # im = Image.open(global_vars.ico_btn_open)
@@ -121,7 +121,7 @@ class ConfigPage(tk.Frame):
     def initTxtScrollList(self):
 
         self.txt_scrollbar = tk.Scrollbar(self.labelFrame_3)
-        self.txt_list = tk.Listbox(self.labelFrame_3, selectmode='multiple', yscrollcommand=self.txt_scrollbar.set,
+        self.txt_list = tk.Listbox(self.labelFrame_3, yscrollcommand=self.txt_scrollbar.set,
                                    width=30)
         self.txt_scrollbar.config(command=self.txt_list.yview)
         self.txt_list.bind("<FocusIn>", self.box_focused)
@@ -202,7 +202,8 @@ class ConfigPage(tk.Frame):
             global_vars.current_filename = os.path.join(global_vars.project_points_folder,
                                                         self.get_filename_from_path(add_file))
         else:
-            global_vars.current_filename = add_file
+            global_vars.current_filename =  os.path.join(global_vars.project_points_folder,
+                                                        self.get_filename_from_path(add_file))
 
         if global_vars.current_filename:
             if not global_vars.current_filename in global_vars.files_opened:
@@ -226,7 +227,8 @@ class ConfigPage(tk.Frame):
             controller.show_frame("STLPage")
 
     def pre_converting(self, controller):
-        print "controller"
+        if global_vars.current_filename:
+            controller.show_frame("STLPage")
 
     def opennew(self):
         print "opening"
@@ -289,7 +291,11 @@ class STLPage(tk.Frame):
 
     def stl_run(self):
         if global_vars.current_filename[-3:] == "txt":
-            #   filename = App.fileOperation.txtTopcd(global_vars.current_filename)
+            #print "sasd " +global_vars.current_filename
+            global_vars.created_pcd.append(convert_txt_to_pcd(global_vars.current_filename))
+            #print global_vars.created_pcd
             # subprocess.check_call([os.path.join(, 'stl_triangulation.exe'), '--file', filename])
+        if global_vars.current_filename[-3:]  == 'csv':
+            convert_csv_to_pcd(global_vars.current_filename)
             print "Finish create stl"
             # subprocess.call(['stl_triangulation.exe ', '--file',FILEPATH], shell=False)
