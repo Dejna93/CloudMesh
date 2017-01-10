@@ -31,9 +31,9 @@ class PluginConfig(object):
 
         self.plugin_dir = os.path.dirname(os.path.abspath(__file__))
 
-        self.workspace_dir = self.plugin_dir + "\\workspace"
+        self.workspace_dir = os.path.join(self.plugin_dir,"workspace")
 
-        self.current_project = self.plugin_dir + "\\workspace"
+        self.current_project = os.path.join(self.plugin_dir,"workspace")
 
         self.project_points_folder = ""
         self.project_stl_folder = ""
@@ -70,13 +70,15 @@ class PluginConfig(object):
         print "PLUGIN DIR" + str(self.current_project)
         print "POINTS DIR" + str(self.project_points_folder)
         print "STL DIR" + str(self.project_stl_folder)
+        print "FILES " + str(self.files_opened)
 
     def dump_last_project(self):
-        with open(self.workspace_dir + "\\plugin.ini", "w") as file:
+        with open(os.path.join(self.workspace_dir,"plugin.ini"), "w") as file:
             file.write("[!ProjectDir]\n")
             file.write("dir={0}".format(self.current_project))
             file.close()
-        with open(self.current_project +"\\project.ini", "w") as file:
+        with open(os.path.join(self.current_project,"project.ini"), "w") as file:
+            print "dumping files" + str(self.files_opened)
             file.write("[!ProjectDir]\n")
             file.write("dir={0}\n".format(self.current_project))
             file.write("[!PointsList]\n")
@@ -89,27 +91,50 @@ class PluginConfig(object):
             file.close()
 
     def init_project(self):
+        canContinue = True
+        print "INITIAL PROJECT\n\n"
         try:
-
-            with open(self.workspace_dir + "\\plugin.ini","r") as file:
+            with open(os.path.join(self.workspace_dir ,"plugin.ini"),"r") as file:
                 for line in file.readlines():
+                    print line
                     if line[:4] =='dir=':
-                        print line[4:]
-                        self.current_project = line[4:]
+                        if os.path.exists(line[4:]):
+                            self.update_project_dir(line[4:])
+                        else:
+                            canContinue = False
                 file.close()
         except EnvironmentError:
             print "Plugin.ini not found"
         try:
-            with open(self.current_project +"\\project.ini","r") as file:
-                for line in file.readlines():
-                    if line[:6] =='files=' and len(line) != 6:
-                        self.files_opened = line[6:].split(';')
-                        print self.files_opened
-                file.close()
+            if canContinue:
+                with open(os.path.join( self.current_project ,"\\project.ini"),"r") as file:
+                    for line in file.readlines():
+                        print line
+                        if line[:6] =='files=' and len(line) != 6:
+                            self.files_opened = line[6:].split(';')
+                            print self.files_opened
+                    file.close()
         except EnvironmentError:
-            print "Plugin.ini not found"
+            print "Project.ini not found or project dir doesnt exists"
+
+    def del_file_open(self,name):
+        """
+        Usuwanie sciezki do pliku z listy plikow gotowych do procesu stla
+        ze stringa w tkinterze
+        """
+        for file_name in self.files_opened:
+            #print file_name[-len(name):] + " " + name
+            if file_name[-len(name):] == name:
+                print "COMBOBOOO"
+                self.files_opened.remove(file_name)
+        print self.files_opened
 
 
+    def update_project_dir(self,name):
+        self.current_project = name
+        self.project_points_folder = os.path.join(self.current_project, "points")
+        self.project_stl_folder = os.path.join(self.current_project, "stl")
+        print "UPDATE_DIR" + self.current_project
 global_vars = PluginConfig()
 
 

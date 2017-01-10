@@ -36,8 +36,8 @@ class App(tk.Tk):
 
         self.menubar = tk.Menu(self)
         self.file_menu = tk.Menu(self.menubar, tearoff=0)
-        self.file_menu.add_command(label="New Project", command=add_project)
-        self.file_menu.add_command(label="Open Project" , command=open_project)
+        self.file_menu.add_command(label="New Project", command=lambda  : add_project(root=self))
+        self.file_menu.add_command(label="Open Project" , command=lambda : open_project(root=self))
         self.file_menu.add_command(label="Exit")
         self.menubar.add_cascade(label="Project", menu=self.file_menu)
 
