@@ -1,7 +1,7 @@
 from __future__ import with_statement
 import os
 from PIL import Image, ImageTk
-
+from plugin.utils.oso import join
 
 class Singelton(type):
     def __init__(cls , name , bases , dict):
@@ -23,17 +23,17 @@ class PluginConfig(object):
         for key, value in kwargs.iteritems():
             self.__dict__[key] = value
 
-        self.window_width = 400
-        self.window_height = 300
+        self.window_width = 700
+        self.window_height = 480
 
-        self.dlab_width = 350
-        self.dlab_height = 250
+        self.dlab_width = 750
+        self.dlab_height = 750
 
         self.plugin_dir = os.path.dirname(os.path.abspath(__file__))
 
-        self.workspace_dir = os.path.join(self.plugin_dir,"workspace")
+        self.workspace_dir = join(self.plugin_dir,"workspace")
 
-        self.current_project = os.path.join(self.plugin_dir,"workspace")
+        self.current_project = join(self.plugin_dir,"workspace")
 
         self.project_points_folder = ""
         self.project_stl_folder = ""
@@ -101,7 +101,7 @@ class PluginConfig(object):
                     print line
                     if line[:4] =='dir=':
                         if os.path.exists(line[4:]):
-                            self.update_project_dir(line[4:])
+                            self.update_project_dir(line[4:].replace("\\","/"))
                         else:
                             canContinue = False
                 file.close()
@@ -113,8 +113,8 @@ class PluginConfig(object):
                     for line in file.readlines():
                         print line
                         if line[:6] =='files=' and len(line) != 6:
-                            self.files_opened = line[6:].split(';')
-                            self.current_filename = self.files_opened[0]
+                            self.files_opened = line[6:].replace("\\","/").split(';')
+                            self.current_filename = self.files_opened[0].replace("\\","/")
                             print self.files_opened
                     file.close()
         except EnvironmentError:
@@ -131,11 +131,34 @@ class PluginConfig(object):
                 self.files_opened.remove(file_name)
         print self.files_opened
 
+    def del_file_pcd(self, name):
+        """
+        Usuwanie sciezki do pliku z listy plikow gotowych do procesu stla
+        ze stringa w tkinterze
+        """
+        for file_name in self.created_pcd:
+            # print file_name[-len(name):] + " " + name
+            if file_name[-len(name):] == name:
+                self.created_pcd.remove(file_name)
+        #print self.files_opened
+
+    def get_opened_file_by_name(self, name):
+        for file_name in self.files_opened:
+            if file_name[-len(name):] == name:
+                return file_name
+        return ''
+
+    def update_currentfile(self,name):
+        if self.current_filename != name:
+            self.current_filename = self.get_opened_file_by_name(name)
+
 
     def update_project_dir(self,name):
         self.current_project = name
-        self.project_points_folder = os.path.join(self.current_project, "points")
-        self.project_stl_folder = os.path.join(self.current_project, "stl")
+        self.project_points_folder = join(self.current_project,"points")
+        self.project_stl_folder = join(self.current_project,"stl")
+        #self.project_points_folder = os.path.join(self.current_project, "points").replace("\\","/")
+        #self.project_stl_folder = os.path.join(self.current_project, "stl").replace("\\","/")
         print "UPDATE_DIR" + self.current_project
 global_vars = PluginConfig()
 

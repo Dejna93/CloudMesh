@@ -48,6 +48,8 @@ class App(tk.Tk):
     def show_frame(self, cont):
         frame = self.frames[cont]
         frame.tkraise()
+        frame.update()
+        frame.event_generate("<<ShowFrame>>")
 
     def quit(self):
         global_vars.dump_last_project()
