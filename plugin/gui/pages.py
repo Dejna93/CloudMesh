@@ -1,14 +1,17 @@
 # coding=UTF-8
 import subprocess
 import os
+from math import pi
 from shutil import copy2
 import Tkinter as tk
 import tkFileDialog
 from tkMessageBox import showerror
 from plugin.config import global_vars
 from plugin.utils.project import open_project
-from plugin.utils.converter import convert_txt_to_pcd , convert_csv_to_pcd
+from plugin.utils.converter import convert_txt_to_pcd, convert_csv_to_pcd
+from plugin.utils.inputs import input_validator
 from plugin.utils.oso import join
+
 
 class StartPage(tk.Frame):
     def __init__(self, parent, controller):
@@ -50,6 +53,7 @@ class StartPage(tk.Frame):
 
     def update(self):
         print "update"
+
 
 class ConfigPage(tk.Frame):
     def __init__(self, parent, controller):
@@ -97,7 +101,7 @@ class ConfigPage(tk.Frame):
     def initEntry(self):
         self.entry_1 = tk.Entry(self.labelFrame_1, bd=2, width=50)
         if global_vars.current_filename:
-            self.entry_1.insert(0,global_vars.current_filename)
+            self.entry_1.insert(0, global_vars.current_filename)
 
     def initButtons(self):
         # im = Image.open(global_vars.ico_btn_open)
@@ -169,7 +173,7 @@ class ConfigPage(tk.Frame):
     def stl_unfocused(self, event):
         self.focus_txt = None
 
-    def select_item(self,event ):
+    def select_item(self, event):
         widget = event.widget
         print widget.get(widget.curselection()[0])
         global_vars.update_currentfile(widget.get(widget.curselection()[0]))
@@ -210,12 +214,11 @@ class ConfigPage(tk.Frame):
                 # print "Coping " + add_file +" to " + global_vars.project_points_folder + "/"+self.get_filename_from_path(add_file)
                 copy2(add_file, global_vars.project_points_folder)
                 global_vars.current_filename = join(global_vars.project_points_folder,
-                                                            self.get_filename_from_path(add_file)).replace("\\","/")
+                                                    self.get_filename_from_path(add_file)).replace("\\", "/")
             else:
                 print global_vars.project_points_folder
-                global_vars.current_filename =  join(global_vars.project_points_folder,
-                                                             os.path.split(add_file)[1]).replace("\\","/")
-
+                global_vars.current_filename = join(global_vars.project_points_folder,
+                                                    os.path.split(add_file)[1]).replace("\\", "/")
 
             if global_vars.current_filename:
                 if not global_vars.current_filename in global_vars.files_opened:
@@ -223,7 +226,6 @@ class ConfigPage(tk.Frame):
 
             self.set_entry(global_vars.current_filename)
             self.txt_list.insert(0, self.get_filename_from_path(global_vars.current_filename))
-
 
     def get_filename_from_path(self, filepath):
         import ntpath
@@ -240,9 +242,9 @@ class ConfigPage(tk.Frame):
 
     def pre_converting(self, controller):
         if global_vars.current_filename:
-            if global_vars.current_filename[-3:] =='txt':
+            if global_vars.current_filename[-3:] == 'txt':
                 global_vars.created_pcd.append(convert_txt_to_pcd(global_vars.current_filename))
-            if global_vars.current_filename[-3:] =='csv':
+            if global_vars.current_filename[-3:] == 'csv':
                 convert_csv_to_pcd(global_vars.current_filename)
             controller.show_frame("STLPage")
 
@@ -257,17 +259,11 @@ class STLPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
 
-        labelFrame = tk.LabelFrame(self, text="Triangulation options", width=global_vars.dlab_width ,height=global_vars.dlab_height, padx=10, pady=10)
+        labelFrame = tk.LabelFrame(self, text="Triangulation options", width=global_vars.dlab_width,
+                                   height=global_vars.dlab_height, padx=10, pady=10)
         labelFrame.grid(row=0, column=0, sticky='W', padx=10, pady=10, ipadx=5, ipady=5)
-        self.pcdFrame = tk.LabelFrame(self, text="PCD Files", width=global_vars.dlab_width,padx=10, pady=10 )
-        self.pcdFrame.grid(row=1 , column=0, sticky="WE" , padx=10,pady=10)
-        self.maxNearNeigh = tk.DoubleVar()
-        self.Mu = tk.DoubleVar()
-        self.searchRadius = tk.DoubleVar()
-        self.minAngle = tk.DoubleVar()
-        self.maxAngle = tk.DoubleVar()
-        self.maxSurfAgle = tk.DoubleVar()
-        self.normalCons = tk.IntVar()
+        self.pcdFrame = tk.LabelFrame(self, text="PCD Files", width=global_vars.dlab_width, padx=10, pady=10)
+        self.pcdFrame.grid(row=1, column=0, sticky="WE", padx=10, pady=10)
         # LABELS STL
         label_1 = tk.Label(labelFrame, text="setMaximumNearestNeighbors")
         label_2 = tk.Label(labelFrame, text="setMu")
@@ -277,15 +273,19 @@ class STLPage(tk.Frame):
         label_6 = tk.Label(labelFrame, text="setMaximumSurfaceAgle")
         label_7 = tk.Label(labelFrame, text="setNormalConsistency")
 
-        label_pcd = tk.Label(self.pcdFrame,text="PCD list")
+        initialVars = (0.025, 2.5, 100, pi / 4, pi / 18, 2 * pi / 3, 0)
+        self.checkInt = tk.IntVar()
+        self.checkInt.set(0)
 
-        pcd_scrollbar =tk.Scrollbar(self.pcdFrame)
+        label_pcd = tk.Label(self.pcdFrame, text="PCD list")
+
+        pcd_scrollbar = tk.Scrollbar(self.pcdFrame)
         self.pcd_list = tk.Listbox(self.pcdFrame, yscrollcommand=pcd_scrollbar.set,
                                    width=40, selectmode=tk.EXTENDED)
         pcd_scrollbar.config(command=self.pcd_list.yview)
         self.update_list()
-        self.pcd_list.grid(row=1,column=0, sticky="W")
-        pcd_scrollbar.grid(row=1,column=1, sticky="E")
+        self.pcd_list.grid(row=1, column=0, sticky="W")
+        pcd_scrollbar.grid(row=1, column=1, sticky="E")
 
         # GRID
         label_1.grid(row=1, column=0, sticky="W")
@@ -296,30 +296,35 @@ class STLPage(tk.Frame):
         label_6.grid(row=6, column=0, sticky="W")
         label_7.grid(row=7, column=0, sticky="W")
 
-        label_pcd.grid(row=0,column=0, sticky="W")
+        label_pcd.grid(row=0, column=0, sticky="W")
         # DEF Entry
-        entry_1 = tk.Entry(labelFrame)
-        entry_2 = tk.Entry(labelFrame)
-        entry_3 = tk.Entry(labelFrame)
-        entry_4 = tk.Entry(labelFrame)
-        entry_5 = tk.Entry(labelFrame)
-        entry_6 = tk.Entry(labelFrame)
-        entry_7 = tk.Checkbutton(labelFrame, onvalue=1, offvalue=1, variable=self.normalCons)
+        self.entires = []
+        for i in range(0, 7):
+            print i
+            if i <= 5:
+                self.entires.append(tk.Entry(labelFrame))
+                self.entires[i].insert(tk.END, initialVars[i])
+                self.entires[i].bind("<KeyPress>", input_validator)
+            else:
+                print "asdsad"
+                self.entires.append(tk.Checkbutton(labelFrame, variable=self.checkInt))
 
-        entry_1.grid(row=1, column=1, sticky="W")
-        entry_2.grid(row=2, column=1, sticky="W")
-        entry_3.grid(row=3, column=1, sticky="W")
-        entry_4.grid(row=4, column=1, sticky="W")
-        entry_5.grid(row=5, column=1, sticky="W")
-        entry_6.grid(row=6, column=1, sticky="W")
-        entry_7.grid(row=7, column=1, sticky="W")
+        for i in range(0, 7):
+            self.entires[i].grid(row=i + 1, column=1, sticky="W")
+            # entry_1.grid(row=1, column=1, sticky="W")
+            # entry_2.grid(row=2, column=1, sticky="W")
+            # entry_3.grid(row=3, column=1, sticky="W")
+            # entry_4.grid(row=4, column=1, sticky="W")
+            # entry_5.grid(row=5, column=1, sticky="W")
+            # entry_6.grid(row=6, column=1, sticky="W")
+            # self.entry_7.grid(row=7, column=1, sticky="W")
 
         # BTN
         button_1 = tk.Button(labelFrame, text="Make STL", command=lambda: self.stl_run())
         button_2 = tk.Button(labelFrame, text="Back", command=lambda: controller.show_frame("ConfigPage"))
 
-        del_btn = tk.Button(self.pcdFrame, text="Del" , command = self.delete)
-        del_btn.grid(row=0,column=2,sticky="E")
+        del_btn = tk.Button(self.pcdFrame, text="Del", command=self.delete)
+        del_btn.grid(row=0, column=2, sticky="E")
 
         button_1.grid(row=9, column=2, sticky="W")
         button_2.grid(row=9, column=3, sticky="E")
@@ -331,20 +336,28 @@ class STLPage(tk.Frame):
             for item in self.pcd_list.curselection():
                 ind = item - pos
                 global_vars.del_file_pcd(self.pcd_list.get(item))
-                self.pcd_list.delete(ind,ind)
+                self.pcd_list.delete(ind, ind)
                 pos = pos + 1
 
     def update_list(self):
         if global_vars.created_pcd:
             for item in global_vars.created_pcd:
-                self.pcd_list.insert(tk.END , '/'.join(item.split('/')[-4:]))
+                self.pcd_list.insert(tk.END, '/'.join(item.split('/')[-4:]))
+
     def update(self):
         self.update_list()
 
     def stl_run(self):
-        #file_list = self.pcd_list.curselection()
-        file_list =   []
+        # file_list = self.pcd_list.curselection()
+        params = []
+        for item in self.entires[:-1]:
+            params.append(item.get())
+        params.append(self.entires[-1])
+        # dodawanie parametow do triangulizacji
+        file_list = []
         for idx in self.pcd_list.curselection():
             print global_vars.plugin_dir
-            subprocess.check_call([os.path.join(os.path.split(global_vars.plugin_dir)[0],'stl_triangulation.exe'), '--file', global_vars.created_pcd[idx]])
+            subprocess.check_call(
+                [os.path.join(os.path.split(global_vars.plugin_dir)[0], 'stl_triangulation.exe'), '--file',
+                 global_vars.created_pcd[idx]])
             file_list.append(global_vars.created_stl[idx])
