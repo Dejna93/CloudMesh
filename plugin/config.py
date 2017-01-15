@@ -1,6 +1,9 @@
 from __future__ import with_statement
 import os
-from PIL import Image, ImageTk
+from sys import version
+
+if version[:3] >= '2.7':
+    from PIL import Image, ImageTk
 from plugin.utils.oso import join
 
 class Singelton(type):
@@ -23,11 +26,15 @@ class PluginConfig(object):
         for key, value in kwargs.iteritems():
             self.__dict__[key] = value
 
-        self.window_width = 700
-        self.window_height = 480
+        self.DEBUG = False
+        #wersja do ktorej sie pisalo
+        self.PYTHON_VERSION ='2.7'
+        self.window_width = 520
+        self.window_height = 380
 
-        self.dlab_width = 750
-        self.dlab_height = 750
+        self.dlab_width = 510
+        self.dlab_height = 380
+
 
         self.plugin_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -38,17 +45,25 @@ class PluginConfig(object):
         self.project_points_folder = ""
         self.project_stl_folder = ""
 
-        self.icon = os.path.join(self.plugin_dir, 'assets\\agh.ico')
-        self.ico_btn_open = os.path.join(self.plugin_dir, "assets\\open.png")
+        if version[:3] >= self.PYTHON_VERSION:
+            self.icon = os.path.join(self.plugin_dir, 'assets\\agh.ico')
+            self.ico_btn_open = os.path.join(self.plugin_dir, "assets\\open.png")
+        else:
+            self.icon = ''
+            self.ico_btn_open =''
 
         self.files_selected = []
         self.files_opened = []
         self.current_filename = ''
         self.created_stl = []
 
+        self.current_stl = ""
+
         self.created_pcd = []
 
         self.stl_param = []
+
+        self.nodeTolerance = "1E-006"
 
         self.setup_workspace()
         self.init_project()
@@ -64,8 +79,10 @@ class PluginConfig(object):
                 raise
 
     def setup_images(self):
-        self.img_open_btn = Image.open(self.ico_btn_open)
-        self.tk_img_open = ImageTk.PhotoImage(self.img_open_btn)
+
+        if version[:3] >= self.PYTHON_VERSION:
+            self.img_open_btn = Image.open(self.ico_btn_open)
+            self.tk_img_open = ImageTk.PhotoImage(self.img_open_btn)
 
     def dump_vars(self):
         print "WORKSPACE DIR" + str(self.workspace_dir)
@@ -85,11 +102,13 @@ class PluginConfig(object):
             file.write("dir={0}\n".format(self.current_project))
             file.write("[!PointsList]\n")
             file.write("files=")
-            for item in self.files_opened:
-                if item != self.files_opened[-1]:
-                    file.write(item+";")
-                else:
-                    file.write(item)
+            #for item in self.files_opened:
+                #file.write(item)
+            file.writelines(';'.join(self.files_opened))
+            file.write('\n')
+            file.write("[!StlList]\n")
+            file.write("stl=")
+            file.writelines(';'.join(self.created_stl))
             file.close()
 
     def init_project(self):
@@ -113,9 +132,11 @@ class PluginConfig(object):
                     for line in file.readlines():
                         print line
                         if line[:6] =='files=' and len(line) != 6:
-                            self.files_opened = line[6:].replace("\\","/").split(';')
-                            self.current_filename = self.files_opened[0].replace("\\","/")
-                            print self.files_opened
+                            self.files_opened = line[6:].strip().replace("\\","/").split(';')
+                            self.current_filename = self.files_opened[0].strip().replace("\\","/")
+                        if line[:4] =='stl=' and len(line) != 4 :
+                            self.current_stl = line[6:].strip().replace("\\","/").split(';')
+                            self.current_stl = self.current_stl[0].strip()
                     file.close()
         except EnvironmentError:
             print "Project.ini not found or project dir doesnt exists"
@@ -142,15 +163,28 @@ class PluginConfig(object):
                 self.created_pcd.remove(file_name)
         #print self.files_opened
 
-    def get_opened_file_by_name(self, name):
-        for file_name in self.files_opened:
-            if file_name[-len(name):] == name:
-                return file_name
+    def get_opened_file_by_name(self, name, type):
+
+        if type =='txt':
+            for file_name in self.files_opened:
+                if file_name[-len(name):] == name:
+                    return file_name
+        elif type =='stl':
+            for file_name in self.created_stl:
+                print "get_opened_by "+name + "filename" + file_name
+                if file_name[-len(name):] == name:
+                    print "found" + file_name
+                    return file_name
         return ''
 
     def update_currentfile(self,name):
         if self.current_filename != name:
-            self.current_filename = self.get_opened_file_by_name(name)
+            self.current_filename = self.get_opened_file_by_name(name,'txt')
+
+    def update_currentstl(self,name):
+        if self.current_stl != name:
+            self.current_stl = self.get_opened_file_by_name(name, 'stl')
+
 
 
     def update_project_dir(self,name):
@@ -161,5 +195,6 @@ class PluginConfig(object):
         #self.project_stl_folder = os.path.join(self.current_project, "stl").replace("\\","/")
         print "UPDATE_DIR" + self.current_project
 global_vars = PluginConfig()
+print "wtedy"
 
 

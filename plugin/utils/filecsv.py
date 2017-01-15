@@ -121,30 +121,25 @@ class FileExtension(object):
         return self.file_type[_index]
 
 
-"""
+
 f = open('microstructure.csv','rt')
 points = []
-fazy = {}
+fazy = []
 try:
     reader = csv.reader(f)
     for row in reader:
-       temp = list(row)
-       if temp[-1] in fazy:
-           fazy[temp[-1]].append(temp[0:3])
-       else:
-           fazy[temp[-1]] = [temp[0:3]]
+       # print list(row)[0:3]
+        fazy.append(list(row)[0:3])
+
 #
 #
 finally:
     f.close()
-print fazy["20"]
-for key,value in fazy.iteritems():
-    with open('fazy\\'+key+'.txt','w') as file:
-        for item in value:
-            file.write("{0} {1} {2}\n".format(item[0] ,item[1] , item[2]) )
-    file.close()
-"""
 
+with open('fazy.txt', 'w') as file:
+    for value in fazy:
+        file.write("{0} {1} {2}\n".format(float(value[0]) ,float(value[1]) , float(value[2])) )
+    file.close()
 
     
 

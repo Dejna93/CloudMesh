@@ -14,7 +14,6 @@ def convert_txt_to_pcd(filename):
             print "converting" + filename
             pcdheader(filename,len(data))
             write_data(filename,data)
-            global_vars.created_pcd.append(filename)
     return filename
 
 
