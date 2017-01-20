@@ -1,4 +1,5 @@
-
+from os.path import exists , split
+from oso import join
 def input_validator(event):
         if event.char in '0123456789':
             pass
@@ -12,3 +13,12 @@ def input_validator(event):
             pass
         else:
             return 'break'
+
+def  is_not_exists(project_dir, filename):
+    if not exists(join(project_dir, split(filename)[1])):
+        return  True
+    return False
+
+def can_join_file(filename):
+    1
+

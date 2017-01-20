@@ -224,8 +224,6 @@ class ConfigPage(tk.Frame):
             showerror("Nie wybrano projektu", "Prosze wybrać projekt w ktorym \n beda zapisywac sie dane")
         else:
             add_file = tkFileDialog.askopenfilename(**self.fileopt)
-            print add_file
-            print "after"
             if add_file != '':
                 if not os.path.exists(join(global_vars.project_points_folder, os.path.split(add_file)[1])):
                     # print "Coping " + add_file +" to " + global_vars.project_points_folder + "/"+self.get_filename_from_path(add_file)
