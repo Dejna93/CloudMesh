@@ -32,7 +32,6 @@ class App(tk.Tk):
         self.file_menu.add_command(label="Open Project", command=lambda: open_project(root=self))
         self.file_menu.add_command(label="Exit")
         self.menubar.add_cascade(label="Project", menu=self.file_menu)
-
         self.config(menu=self.menubar)
 
         self.frames = {}
