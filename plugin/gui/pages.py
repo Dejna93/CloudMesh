@@ -88,7 +88,7 @@ class ConfigPage(tk.Frame):
         self.fileopt = options = {}
         options['defaultextension'] = '.txt'
         options['filetypes'] = [('text files', '.txt'), ('Csv files', '.csv'), ('Point cloud data', '.pcd')]
-        options['initialdir'] = global_vars.plugin_dir
+        options['initialdir'] = global_vars.current_project if global_vars.current_project !='' and global_vars.current_project != global_vars.workspace_dir else global_vars.workspace_dir
         options['initialfile'] = ''
         options['parent'] = self
         options['title'] = 'Open file to import'
@@ -224,24 +224,27 @@ class ConfigPage(tk.Frame):
             showerror("Nie wybrano projektu", "Prosze wybrać projekt w ktorym \n beda zapisywac sie dane")
         else:
             add_file = tkFileDialog.askopenfilename(**self.fileopt)
-            print "OPEN FILE" + add_file
-            if not os.path.exists(join(global_vars.project_points_folder, os.path.split(add_file)[1])):
-                # print "Coping " + add_file +" to " + global_vars.project_points_folder + "/"+self.get_filename_from_path(add_file)
-                copy2(add_file, global_vars.project_points_folder)
-                global_vars.current_filename = join(global_vars.project_points_folder,
-                                                    self.get_filename_from_path(add_file)).replace("\\", "/")
+            print add_file
+            print "after"
+            if add_file != '':
+                if not os.path.exists(join(global_vars.project_points_folder, os.path.split(add_file)[1])):
+                    # print "Coping " + add_file +" to " + global_vars.project_points_folder + "/"+self.get_filename_from_path(add_file)
+                    copy2(add_file, global_vars.project_points_folder)
+                    global_vars.current_filename = join(global_vars.project_points_folder,
+                                                        self.get_filename_from_path(add_file)).replace("\\", "/")
+                else:
+                    print global_vars.project_points_folder
+                    global_vars.current_filename = join(global_vars.project_points_folder,
+                                                        os.path.split(add_file)[1]).replace("\\", "/")
+
+                if global_vars.current_filename:
+                    if not global_vars.current_filename in global_vars.files_opened:
+                        global_vars.files_opened.append(global_vars.current_filename)
+
+                self.set_entry(global_vars.current_filename)
+                self.txt_list.insert(0, self.get_filename_from_path(global_vars.current_filename))
             else:
-                print global_vars.project_points_folder
-                #global_vars.current_filename = join(global_vars.project_points_folder,
-                                                   # os.path.split(add_file)[1]).replace("\\", "/")
-
-            if global_vars.current_filename:
-                if not global_vars.current_filename in global_vars.files_opened:
-                    global_vars.files_opened.append(global_vars.current_filename)
-
-            self.set_entry(global_vars.current_filename)
-            self.txt_list.insert(0, self.get_filename_from_path(global_vars.current_filename))
-
+                showerror("Nie wybrano pliku", "Prosze wskazać plik do otwarcia")
     def get_filename_from_path(self, filepath):
         import ntpath
         head, tail = ntpath.split(filepath)
