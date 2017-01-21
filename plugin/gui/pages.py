@@ -8,10 +8,10 @@ import Tkinter as tk
 import tkFileDialog
 from tkMessageBox import showerror
 from plugin.config import global_vars
-from plugin.utils.project import open_project
+from plugin.utils.project import open_project, is_project_open, is_added
 from plugin.utils.converter import convert_txt_to_pcd, convert_csv_to_pcd
 from plugin.utils.inputs import input_validator
-from plugin.utils.oso import join , change_ext , get_filename_from_path
+from plugin.utils.oso import join, change_ext, get_filename_from_path, is_exists
 
 
 class StartPage(tk.Frame):
@@ -220,29 +220,37 @@ class ConfigPage(tk.Frame):
     def askopenfile(self):
         ##TODO dodaj obsluge kopiowania do katalogu projektu
         # global_vars.dump_vars()
-        if global_vars.workspace_dir == global_vars.current_project or global_vars.current_project == '':
-            showerror("Nie wybrano projektu", "Prosze wybrać projekt w ktorym \n beda zapisywac sie dane")
-        else:
-            add_file = tkFileDialog.askopenfilename(**self.fileopt)
+
+        if is_project_open():
+            add_file = self.open_file()
             if add_file != '':
-                if not os.path.exists(join(global_vars.project_points_folder, os.path.split(add_file)[1])):
-                    # print "Coping " + add_file +" to " + global_vars.project_points_folder + "/"+self.get_filename_from_path(add_file)
+                if is_exists(global_vars.project_points_folder, add_file):
+                    if not is_added(add_file):
+                        global_vars.current_filename = join(global_vars.project_points_folder,
+                                                            os.path.split(add_file)[1])
+                        global_vars.files_opened.append(global_vars.current_filename)
+                        self.update_list()
+                    else:
+                        print "File was added earlier"
+                else:
                     copy2(add_file, global_vars.project_points_folder)
                     global_vars.current_filename = join(global_vars.project_points_folder,
-                                                        self.get_filename_from_path(add_file)).replace("\\", "/")
-                else:
-                    print global_vars.project_points_folder
-                    global_vars.current_filename = join(global_vars.project_points_folder,
-                                                        os.path.split(add_file)[1]).replace("\\", "/")
+                                                        self.get_filename_from_path(add_file))
+                    global_vars.files_opened.append(global_vars.current_filename)
+                    self.update_list()
 
-                if global_vars.current_filename:
-                    if not global_vars.current_filename in global_vars.files_opened:
-                        global_vars.files_opened.append(global_vars.current_filename)
-
-                self.set_entry(global_vars.current_filename)
-                self.txt_list.insert(0, self.get_filename_from_path(global_vars.current_filename))
             else:
-                showerror("Nie wybrano pliku", "Prosze wskazać plik do otwarcia")
+                print "Filepath is empty"
+        else:
+            showerror("Nie wybrano projektu", "Prosze wybrać projekt w ktorym \n beda zapisywac sie dane")
+
+    def update_list(self):
+        self.set_entry(global_vars.current_filename)
+        self.txt_list.insert('end', self.get_filename_from_path(global_vars.current_filename))
+
+    def open_file(self):
+        return tkFileDialog.askopenfilename(**self.fileopt)
+
     def get_filename_from_path(self, filepath):
         import ntpath
         head, tail = ntpath.split(filepath)
@@ -251,10 +259,6 @@ class ConfigPage(tk.Frame):
     def set_entry(self, text):
         self.entry_1.delete(0, tk.END)
         self.entry_1.insert(0, text)
-
-    def check_filepath(self, controller):
-        if global_vars.current_filename:
-            controller.show_frame("STLPage")
 
     def pre_converting(self, controller):
         if global_vars.current_filename:
@@ -270,16 +274,12 @@ class ConfigPage(tk.Frame):
         self.controller.show_frame("AbaqusPage")
 
 
-    def opennew(self):
-        print "opening"
-
     def update(self):
         self.stlList.delete(0,tk.END)
         self.txt_list.delete(0,tk.END)
         for item in global_vars.files_opened:
             self.txt_list.insert(tk.END,self.get_filename_from_path(item))
         for item in global_vars.created_stl:
-            print "update "+self.get_filename_from_path(item)
             self.stlList.insert(tk.END,self.get_filename_from_path(item))
 
 
@@ -381,8 +381,6 @@ class STLPage(tk.Frame):
         print global_vars.created_pcd
 
         for idx in self.pcd_list.curselection():
-            print idx
-            print os.path.join(os.path.split(global_vars.plugin_dir)[0], 'stl_triangulation.exe')
             subprocess.check_call(
                 [os.path.join(os.path.split(global_vars.plugin_dir)[0], 'stl_triangulation.exe'), '--file',
                  global_vars.created_pcd[int(idx)]])

@@ -1,7 +1,9 @@
 # coding=UTF-8
 import os
+
 import tkFileDialog
 from ..config import global_vars
+from plugin.utils.oso import is_exists
 
 def add_project(root):
     dir_opt = options = {}
@@ -39,6 +41,14 @@ def open_project(root):
         raise ValueError("Wybierz folder")
 
 
+def is_added(file):
+    if is_exists(global_vars.project_points_folder, file):
+        if file in global_vars.files_opened:
+            return True
+    return False
 
 
-
+def is_project_open():
+    if global_vars.workspace_dir == global_vars.current_project or global_vars.current_project == '':
+        return False
+    return True

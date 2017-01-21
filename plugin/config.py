@@ -6,6 +6,7 @@ if version[:3] >= '2.7':
     from PIL import Image, ImageTk
 from plugin.utils.oso import join
 
+
 class Singelton(type):
     def __init__(cls , name , bases , dict):
         super(Singelton, cls).__init__(name,bases,dict)
@@ -194,6 +195,14 @@ class PluginConfig(object):
         #self.project_points_folder = os.path.join(self.current_project, "points").replace("\\","/")
         #self.project_stl_folder = os.path.join(self.current_project, "stl").replace("\\","/")
         print "UPDATE_DIR" + self.current_project
+
+    def is_added(self, file):
+        if not is_exists(self.project_points_folder, file):
+            if file in self.files_opened:
+                return True
+        return False
+
+
 global_vars = PluginConfig()
 print "wtedy"
 
