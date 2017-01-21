@@ -194,11 +194,7 @@ class ConfigPage(tk.Frame):
         if self.focus_stl:
             widget = event.widget
             if len(widget.curselection()) != 0:
-                print "selection "+widget.get(widget.curselection()[0])
                 global_vars.update_currentstl(widget.get(widget.curselection()[0]))
-                print "current_stl"+ global_vars.current_stl
-        else:
-            print "NIE MA STLA"
     def delete(self):
         if not self.focus_txt:
             pass
@@ -261,6 +257,7 @@ class ConfigPage(tk.Frame):
         self.entry_1.insert(0, text)
 
     def pre_converting(self, controller):
+        # TODO ZROB ŻE TO PORZADNIE CHAMIE
         if global_vars.current_filename:
             if global_vars.current_filename[-3:] == 'txt':
                 global_vars.created_pcd.append(convert_txt_to_pcd(global_vars.current_filename))
@@ -419,7 +416,7 @@ class AbaqusPage(tk.Frame):
 
     def stl_abaqus(self):
         params = []
-
+        #TODO ZMUS DO DZIALANIA Z BAMBAQUSEM
         for item in self.enties:
             params.append(item.get())
         print params
