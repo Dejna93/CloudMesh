@@ -226,17 +226,17 @@ class ConfigPage(tk.Frame):
             if add_file != '':
                 if is_exists(global_vars.project_points_folder, add_file):
                     if not is_added(add_file):
-                        global_vars.current_filename = join(global_vars.project_points_folder,
-                                                            os.path.split(add_file)[1])
-                        global_vars.files_opened.append(global_vars.current_filename)
+                        global_vars.update_currentfile(
+                            join(global_vars.project_points_folder, os.path.split(add_file)[1]))
+                        global_vars.add_open_file()
                         self.update_list()
                     else:
                         print "File was added earlier"
                 else:
                     copy2(add_file, global_vars.project_points_folder)
-                    global_vars.current_filename = join(global_vars.project_points_folder,
-                                                        self.get_filename_from_path(add_file))
-                    global_vars.files_opened.append(global_vars.current_filename)
+                    global_vars.update_currentfile(join(global_vars.project_points_folder,
+                                                        self.get_filename_from_path(add_file)))
+                    global_vars.add_open_file()
                     self.update_list()
 
             else:

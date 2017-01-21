@@ -186,7 +186,8 @@ class PluginConfig(object):
         if self.current_stl != name:
             self.current_stl = self.get_opened_file_by_name(name, 'stl')
 
-
+    def add_open_file(self):
+        self.files_opened.append(self.current_filename)
 
     def update_project_dir(self,name):
         self.current_project = name
