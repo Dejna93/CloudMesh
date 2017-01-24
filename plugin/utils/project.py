@@ -12,6 +12,7 @@ def add_project(root):
    # options['parent'] = parent
     options['title'] = 'Dodaj projekt'
     folder = tkFileDialog.askdirectory(**dir_opt)
+    root.wm_title('')
     root.wm_title(global_vars.title + " - Project -" + '/'.join(folder.split('/')[-4:]))
 
     if folder:
@@ -33,6 +34,7 @@ def open_project(root):
     options['mustexist'] = True
     options['title'] = 'Otwórz projekt'
     folder = tkFileDialog.askdirectory(**dir_opt)
+    root.wm_title('')
     root.wm_title(global_vars.title + " - Project -" + '/'.join(folder.split('/')[-4:]))
 
     if folder:

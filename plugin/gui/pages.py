@@ -12,27 +12,29 @@ from plugin.utils.project import open_project, is_project_open, is_added
 from plugin.utils.converter import convert_txt_to_pcd, convert_csv_to_pcd
 from plugin.utils.inputs import input_validator
 from plugin.utils.oso import join, change_ext, get_filename_from_path, is_exists
+from plugin.utils.logger import Log
 
 
-class StartPage(tk.Frame):
+class Page(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.parent = parent
+        self.controller = controller
 
-        about = """
-        //PL
-            Plugin przeznaczony do stworzenia geometrii w Abaqusie z chmury punktów.
-        Plik z chmurą punktów powinien być rozszerzenia .txt lub .csv
-        a punkty xyz powinny być w kolumnach odzielone od siebie 'spacją lub tabulatorem' w przypadku
-        pliku txt
+    def update(self):
+        pass
 
-        //ENG
-            TODO
-        """
+
+class StartPage(Page):
+    def __init__(self, parent, controller):
+        # tk.Frame.__init__(self, parent)
+        Page.__init__(self, parent, controller)
+        self.parent = parent
+
         self.start_labelframe = tk.LabelFrame(self, text="About", height=global_vars.dlab_height, padx=10, pady=10)
         self.start_labelframe.grid(row=0, column=0, sticky="NS")
 
-        self.label_about = tk.Label(self.start_labelframe, text=about)
+        self.label_about = tk.Label(self.start_labelframe, text=global_vars.about)
         self.label_about.grid(row=0, column=0, columnspan=4)
 
         button1 = tk.Button(self.start_labelframe, text="OK", command=lambda: controller.show_frame("ConfigPage"))
@@ -57,22 +59,16 @@ class StartPage(tk.Frame):
         self.btn_workspace.grid(row=0, column=1)
 
 
-    def update(self):
-        print "update"
-
-
-class ConfigPage(tk.Frame):
+class ConfigPage(Page):
     def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
+        Page.__init__(self, parent, controller)
         self.parent = parent
         self.controller = controller
-        # global_vars.dump_vars()
+
 
         self.focus_stl = None
         self.focus_txt = None
 
-        # self.fileoper = FileOperation()
-        # define options for opening or saving a file
         self.initOptions()
 
         # labels
@@ -107,18 +103,18 @@ class ConfigPage(tk.Frame):
     def initEntry(self):
         self.entry_1 = tk.Entry(self.labelFrame_1, bd=2, width=50)
         if global_vars.current_filename:
+            print "initEntry " + global_vars.current_filename
             self.entry_1.insert(0, global_vars.current_filename)
 
     def initButtons(self):
-        # im = Image.open(global_vars.ico_btn_open)
-        # ph = ImageTk.PhotoImage(im)
+
         if version[:3] >= global_vars.PYTHON_VERSION:
             self.btn_1 = tk.Button(self.labelFrame_1, image=global_vars.tk_img_open, command=self.askopenfile)
             self.btn_1.image = global_vars.img_open_btn
         else:
             self.btn_1 = tk.Button(self.labelFrame_1, text="Open", command=self.askopenfile)
         self.btn_3 = tk.Button(self.labelFrame_2, text="OK", command=lambda: self.pre_converting(
-            self.controller))  # self.check_filepath(self.controller))
+            self.controller))
         self.btn_4 = tk.Button(self.labelFrame_2, text="Import" , command = self.to_abaqus)
         self.btn_del = tk.Button(self.labelFrame_3, text="Del", command=self.delete)
 
@@ -194,7 +190,11 @@ class ConfigPage(tk.Frame):
         if self.focus_stl:
             widget = event.widget
             if len(widget.curselection()) != 0:
+                Log.log("Selection " + widget.get(widget.curselection()[0]))
                 global_vars.update_currentstl(widget.get(widget.curselection()[0]))
+                Log.log("current_stl" + global_vars.current_stl)
+        else:
+            print "NIE MA STLA"
     def delete(self):
         if not self.focus_txt:
             pass
@@ -222,21 +222,21 @@ class ConfigPage(tk.Frame):
             if add_file != '':
                 if is_exists(global_vars.project_points_folder, add_file):
                     if not is_added(add_file):
-                        global_vars.update_currentfile(
-                            join(global_vars.project_points_folder, os.path.split(add_file)[1]))
-                        global_vars.add_open_file()
+                        global_vars.current_filename = join(global_vars.project_points_folder,
+                                                            os.path.split(add_file)[1])
+                        global_vars.files_opened.append(global_vars.current_filename)
                         self.update_list()
                     else:
-                        print "File was added earlier"
+                        Log.error("File was added earlier")
                 else:
                     copy2(add_file, global_vars.project_points_folder)
-                    global_vars.update_currentfile(join(global_vars.project_points_folder,
-                                                        self.get_filename_from_path(add_file)))
-                    global_vars.add_open_file()
+                    global_vars.current_filename = join(global_vars.project_points_folder,
+                                                        self.get_filename_from_path(add_file))
+                    global_vars.files_opened.append(global_vars.current_filename)
                     self.update_list()
 
             else:
-                print "Filepath is empty"
+                Log.error("Filepath is empty")
         else:
             showerror("Nie wybrano projektu", "Prosze wybrać projekt w ktorym \n beda zapisywac sie dane")
 
@@ -257,10 +257,10 @@ class ConfigPage(tk.Frame):
         self.entry_1.insert(0, text)
 
     def pre_converting(self, controller):
-        # TODO ZROB ŻE TO PORZADNIE CHAMIE
         if global_vars.current_filename:
             if global_vars.current_filename[-3:] == 'txt':
-                global_vars.created_pcd.append(convert_txt_to_pcd(global_vars.current_filename))
+                created = convert_txt_to_pcd(global_vars.current_filename)
+                global_vars.can_add_pcd(created)
             if global_vars.current_filename[-3:] == 'csv':
                 convert_csv_to_pcd(global_vars.current_filename)
             controller.show_frame("STLPage")
@@ -280,10 +280,9 @@ class ConfigPage(tk.Frame):
             self.stlList.insert(tk.END,self.get_filename_from_path(item))
 
 
-
-class STLPage(tk.Frame):
+class STLPage(Page):
     def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
+        Page.__init__(self, parent, controller)
 
         labelFrame = tk.LabelFrame(self, text="Triangulation options", width=global_vars.dlab_width,
                                    height=global_vars.dlab_height, padx=10, pady=10)
@@ -360,12 +359,12 @@ class STLPage(tk.Frame):
 
     def update_list(self):
         self.pcd_list.delete(0 , tk.END)
-        print global_vars.created_pcd
-        if global_vars.created_pcd:
-            for item in global_vars.created_pcd:
-                self.pcd_list.insert(tk.END, '/'.join(item.split('/')[-4:]))
+        for item in global_vars.created_pcd:
+            Log.log("item" + item)
+            self.pcd_list.insert(tk.END, '/'.join(item.split('/')[-4:]))
 
     def update(self):
+        Log.log("Updated ")
         self.update_list()
 
     def stl_run(self):
@@ -383,11 +382,13 @@ class STLPage(tk.Frame):
                  global_vars.created_pcd[int(idx)]])
             copy2(change_ext( global_vars.created_pcd[int(idx)], '.stl'), global_vars.project_stl_folder)
 
-            global_vars.created_stl.append(change_ext( global_vars.created_pcd[int(idx)], '.stl'))
+            created = change_ext(global_vars.created_pcd[int(idx)], '.stl')
+            global_vars.can_add_stl(created)
 
-class AbaqusPage(tk.Frame):
+
+class AbaqusPage(Page):
     def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
+        Page.__init__(self, parent, controller)
         self.labelFrame = tk.LabelFrame(self, text="STL settings for import" , width=global_vars.dlab_width , height = global_vars.dlab_height , padx=10 , pady=10)
         self.labelFrame.grid(row=0 , column=0, sticky="NWSE", padx=10, pady=10, ipadx=5, ipady=5)
 
@@ -416,7 +417,7 @@ class AbaqusPage(tk.Frame):
 
     def stl_abaqus(self):
         params = []
-        #TODO ZMUS DO DZIALANIA Z BAMBAQUSEM
+
         for item in self.enties:
             params.append(item.get())
         print params
@@ -424,11 +425,3 @@ class AbaqusPage(tk.Frame):
         if global_vars.DEBUG==False :
             from plugin.utils.abaqus import stl_to_abaqus
             stl_to_abaqus(params[0],params[1],params[2])
-
-
-
-
-
-
-
-

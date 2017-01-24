@@ -2,6 +2,7 @@ import os
 import csv
 from plugin.utils.oso import join
 from plugin.config import global_vars
+from plugin.utils.logger import Log
 def convert_txt_to_pcd(filename):
     print filename
     if filename[-3:] == 'txt':
@@ -11,7 +12,7 @@ def convert_txt_to_pcd(filename):
                 data.append([split for split in line.split()])
             file.close()
             filename = filename.replace('.txt', '.pcd')
-            print "converting" + filename
+            Log.log("Converting" + filename)
             pcdheader(filename,len(data))
             write_data(filename,data)
     return filename
@@ -36,7 +37,6 @@ def convert_csv_to_pcd(filename):
                 folder , tail = os.path.split(filename)
                 #file_pcd = filename[:-4] + str(key) + ".pcd"
                 file_pcd = join(folder,"".join((os.path.splitext(tail)[0],key,".pcd")))
-                print filename
                 global_vars.created_pcd.append(file_pcd)
                 pcdheader(file_pcd,len(value))
                 write_data(file_pcd,value)

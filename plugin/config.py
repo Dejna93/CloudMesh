@@ -1,3 +1,4 @@
+# coding=UTF-8
 from __future__ import with_statement
 import os
 from sys import version
@@ -5,7 +6,7 @@ from sys import version
 if version[:3] >= '2.7':
     from PIL import Image, ImageTk
 from plugin.utils.oso import join
-
+from plugin.utils.logger import Log
 
 class Singelton(type):
     def __init__(cls , name , bases , dict):
@@ -71,6 +72,17 @@ class PluginConfig(object):
 
         self.title = "Import Mesh to Abaqus" + " - Project -" + '/'.join(self.current_project.split('/')[-4:])
 
+        self.about = """
+            //PL
+                Plugin przeznaczony do stworzenia geometrii w Abaqusie z chmury punktów.
+            Plik z chmurą punktów powinien być rozszerzenia .txt lub .csv
+            a punkty xyz powinny być w kolumnach odzielone od siebie 'spacją lub tabulatorem' w przypadku
+            pliku txt
+
+            //ENG
+                TODO
+            """
+
     def setup_workspace(self):
         try:
             if not os.path.exists(self.workspace_dir):
@@ -126,21 +138,26 @@ class PluginConfig(object):
                             canContinue = False
                 file.close()
         except EnvironmentError:
-            print "Plugin.ini not found"
+            Log.error("Plugin.ini not found")
         try:
             if canContinue:
                 with open(os.path.join( self.current_project ,"project.ini"),"r") as file:
                     for line in file.readlines():
-                        print line
                         if line[:6] =='files=' and len(line) != 6:
-                            self.files_opened = line[6:].strip().replace("\\","/").split(';')
-                            self.current_filename = self.files_opened[0].strip().replace("\\","/")
+                            files = line[6:].strip().replace("\\", "/").split(';')[0]
+                            if files != '':
+                                self.current_filename = files
+                                Log.log(self.current_filename)
+                                self.files_opened.append(self.current_filename)
+                            else:
+                                self.current_filename = ''
                         if line[:4] =='stl=' and len(line) != 4 :
-                            self.current_stl = line[6:].strip().replace("\\","/").split(';')
-                            self.current_stl = self.current_stl[0].strip()
+                            self.current_stl = line[4:].replace("\\", "/").split(';')[0]
+                            Log.log(self.current_stl)
+                            self.created_stl.append(self.current_stl)
                     file.close()
         except EnvironmentError:
-            print "Project.ini not found or project dir doesnt exists"
+            Log.error("Project.ini not found or project dir doesnt exists")
 
     def del_file_open(self,name):
         """
@@ -151,7 +168,6 @@ class PluginConfig(object):
             #print file_name[-len(name):] + " " + name
             if file_name[-len(name):] == name:
                 self.files_opened.remove(file_name)
-        print self.files_opened
 
     def del_file_pcd(self, name):
         """
@@ -172,9 +188,8 @@ class PluginConfig(object):
                     return file_name
         elif type =='stl':
             for file_name in self.created_stl:
-                print "get_opened_by "+name + "filename" + file_name
+                Log.log("Get_opened_by " + name + " filename" + file_name)
                 if file_name[-len(name):] == name:
-                    print "found" + file_name
                     return file_name
         return ''
 
@@ -194,17 +209,26 @@ class PluginConfig(object):
         self.project_points_folder = join(self.current_project,"points")
         self.project_stl_folder = join(self.current_project,"stl")
         #self.project_points_folder = os.path.join(self.current_project, "points").replace("\\","/")
-        #self.project_stl_folder = os.path.join(self.current_project, "stl").replace("\\","/")
-        print "UPDATE_DIR" + self.current_project
+        # self.project_stl_folder = os.path.join(self.current_project, "stl").replace("\\","/"
 
-    def is_added(self, file):
-        if not is_exists(self.project_points_folder, file):
-            if file in self.files_opened:
-                return True
+    def is_exits(self, created):
+        if created in self.created_pcd:
+            Log.log(self.created_pcd)
+            return True
         return False
 
+    def can_add_pcd(self, created):
+        if not self.is_exits(created):
+            self.created_pcd.append(created)
+            Log.log("Created " + created)
+        else:
+            Log.error("Error " + created + " is in list \n" + str(self.created_pcd))
+
+    def can_add_stl(self, created):
+        if not self.is_exits(created):
+            self.created_stl.append(created)
+            Log.log("Created " + created)
+        else:
+            Log.error("Error " + created + " is in list \n" + str(self.created_stl))
 
 global_vars = PluginConfig()
-print "wtedy"
-
-
