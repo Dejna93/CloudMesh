@@ -1,6 +1,5 @@
 # coding=UTF-8
 import Tkinter as tk
-from stlOper import FileOperation
 
 from plugin.utils.project import add_project, open_project
 from plugin.config import global_vars
@@ -11,7 +10,6 @@ from plugin.gui.pages import StartPage, ConfigPage, STLPage, AbaqusPage
 
 
 class App(tk.Tk):
-    fileOperation = FileOperation()
 
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
