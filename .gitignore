@@ -362,3 +362,11 @@ paket-files/
 
 # Cake - Uncomment if you are using it
 # tools/
+
+*.pcd
+*.inp
+abaqus_instalator/
+fazy/
+pcl_triangulation/mesh/dane.txt
+plugin/workspace/project/points/
+plugin/workspace/project/stl/
