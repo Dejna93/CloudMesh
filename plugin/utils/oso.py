@@ -30,7 +30,7 @@ def get_selection(list , i):
     try:
         return list[i]
     except IndexError:
-        return 0
+        return -1
 
 def clean_path(path):
     if platform.system() == 'Windows':

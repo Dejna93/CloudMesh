@@ -2,8 +2,9 @@ from __future__ import with_statement
 from collections import Iterable
 import os
 from sys import version
+from plugin.utils.params import stlParams
 
-if version[:3] >= '2.7':
+if version[:3] >= '3':
     from PIL import Image, ImageTk
 from plugin.utils.oso import join
 
@@ -29,7 +30,7 @@ class PluginConfig(object):
 
         self.DEBUG = False
         #wersja do ktorej sie pisalo
-        self.PYTHON_VERSION ='2.7'
+        self.PYTHON_VERSION ='3'
         self.window_width = 520
         self.window_height = 380
 
@@ -131,27 +132,32 @@ class PluginConfig(object):
             if canContinue:
                 with open(os.path.join( self.current_project ,"project.ini"),"r") as file:
                     for line in file.readlines():
-                        print line
                         if line[:6] =='files=' and len(line) != 6:
                             self.files_opened = line[6:].strip().replace("\\","/").split(';')
                             self.current_filename = self.files_opened[0].strip().replace("\\","/")
                         if line[:4] =='stl=' and len(line) != 4 :
-                            self.current_stl = line[6:].strip().replace("\\","/").split(';')
+                            self.current_stl = line[4:].strip().replace("\\","/").split(';')
                             self.current_stl = self.current_stl[0].strip()
+                            self.created_stl = line[4:].strip().replace("\\","/").split(';')
                     file.close()
         except EnvironmentError:
             print "Project.ini not found or project dir doesnt exists"
 
-    def del_file_open(self,name):
+    def del_file_open(self,name,type):
         """
         Usuwanie sciezki do pliku z listy plikow gotowych do procesu stla
         ze stringa w tkinterze
         """
-        for file_name in self.files_opened:
-            #print file_name[-len(name):] + " " + name
-            if file_name[-len(name):] == name:
-                self.files_opened.remove(file_name)
-        print self.files_opened
+        print type
+        if type == 0:
+            for file_name in self.files_opened:
+                #print file_name[-len(name):] + " " + name
+                if file_name[-len(name):] == name:
+                    self.files_opened.remove(file_name)
+        if type == 1:
+            for file_name in self.created_stl:
+                if file_name[-len(name):] == name:
+                    self.created_stl.remove(file_name)
 
     def del_file_pcd(self, name):
         """
@@ -195,7 +201,10 @@ class PluginConfig(object):
         #self.project_points_folder = os.path.join(self.current_project, "points").replace("\\","/")
         #self.project_stl_folder = os.path.join(self.current_project, "stl").replace("\\","/")
         print "UPDATE_DIR" + self.current_project
+        os.remove(join(self.project_stl_folder,'output.log'))
 
+        stlParams.set_param("points", self.project_points_folder)
+        stlParams.set_param("stl",self.project_stl_folder)
 
     def add_project(self):
         self.current_filename = ''
@@ -248,7 +257,21 @@ class PluginConfig(object):
     def update_stl_files(self, stl_files):
 
         if isinstance(stl_files, Iterable):
+            print stl_files
             self.created_stl = stl_files
+
+    def import_stl_from_log(self):
+        stls = []
+        with open( join(self.project_stl_folder,'output.log')) as file:
+            for item in file.readlines():
+                stls.append(item)
+        return stls
+
+
+    def add_to_stl(self, item):
+        self.created_stl.append(item)
+
+
 
 global_vars = PluginConfig()
 

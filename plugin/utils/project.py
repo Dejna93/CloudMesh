@@ -115,9 +115,11 @@ class ProjectManager(object):
                 raise
 
     def get_files(self,path):
+        print  "get files"
         files = [os.path.join(path,f) for f in os.listdir(path) if os.path.isfile(os.path.join(path,f)  )]
         for file in files:
             files[files.index(file)] = clean_path(file)
+        print files
         return files
 
 

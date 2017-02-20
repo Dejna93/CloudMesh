@@ -8,6 +8,7 @@ from plugin.config import global_vars
 # pages
 
 from plugin.gui.pages import StartPage, ConfigPage, STLPage, AbaqusPage
+from plugin.gui.pages import OptionPage, LaplacianPage , PoissonPage, GreedyPage
 
 
 class App(tk.Tk):
@@ -15,7 +16,7 @@ class App(tk.Tk):
 
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
-        tk.Tk.iconbitmap(self, default=global_vars.icon)
+       # tk.Tk.iconbitmap(self, default=global_vars.icon)
         tk.Tk.wm_title(self, global_vars.title)
         self.protocol("WM_DELETE_WINDOW", self.quit)
         container = tk.Frame(self)
@@ -36,7 +37,7 @@ class App(tk.Tk):
 
         self.frames = {}
 
-        for F in (StartPage, ConfigPage, STLPage, AbaqusPage):
+        for F in (StartPage, ConfigPage, STLPage, AbaqusPage , OptionPage , LaplacianPage, PoissonPage, GreedyPage):
             page_name = F.__name__
             frame = F(parent=container, controller=self)
             self.frames[page_name] = frame

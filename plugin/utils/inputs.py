@@ -22,3 +22,11 @@ def  is_not_exists(project_dir, filename):
 def can_join_file(filename):
     1
 
+
+class STLParams(object):
+
+    def __init__(self, *args ,**kwargs):
+        for key, value in kwargs.items():
+            self.__dict__[key] = value
+
+        print __dict__
