@@ -1,6 +1,7 @@
 # coding=UTF-8
 import subprocess
 import os
+from sys import platform
 
 from sys import version
 from math import pi
@@ -45,7 +46,7 @@ class StartPage(Page):
             TODO
         """
         self.start_labelframe = tk.LabelFrame(self, text="About", height=global_vars.dlab_height, padx=10, pady=10)
-        self.start_labelframe.grid(row=0, column=0, sticky="NS")
+        self.start_labelframe.grid(row=0, column=0, sticky="NS", padx=10, pady=10)
 
         self.label_about = tk.Label(self.start_labelframe, text=about)
         self.label_about.grid(row=0, column=0, columnspan=4)
@@ -311,14 +312,14 @@ class ConfigPage(Page):
         if not global_vars.is_same_list(self.txt_list.get(0,tk.END) , global_vars.files_opened):
             print "update list"
             self.txt_list.delete(0,tk.END)
-            for item in global_vars.files_opened:
+            for item in sorted(global_vars.files_opened):
                 self.txt_list.insert(tk.END,item)
             #self.txt_list.selection_set(0)
 
         if not global_vars.is_same_list(self.stlList.get(0, tk.END), global_vars.created_stl):
             self.stlList.delete(0, tk.END)
             print  "update stl"
-            for item in global_vars.created_stl:
+            for item in sorted(global_vars.created_stl):
                 self.stlList.insert(tk.END, item)
 
     def update_title(self):
@@ -372,8 +373,8 @@ class STLPage(Page):
         label_pcd = tk.Label(self.pcdFrame, text="PCD list")
 
         pcd_scrollbar = tk.Scrollbar(self.pcdFrame)
-        self.pcd_list = tk.Listbox(self.pcdFrame,listvariable=[], yscrollcommand=pcd_scrollbar.set,
-                                   width=40, selectmode=tk.EXTENDED)
+        self.pcd_list = tk.Listbox(self.pcdFrame, listvariable=[], yscrollcommand=pcd_scrollbar.set,
+                                   width=90, selectmode=tk.EXTENDED)
         pcd_scrollbar.config(command=self.pcd_list.yview)
         self.update_list()
         self.pcd_list.grid(row=1, column=0, sticky="W")
@@ -450,7 +451,13 @@ class STLPage(Page):
               #   global_vars.created_pcd[int(idx)], '-p',
                #  stlParams.save_params(join(global_vars.current_project, 'params.ini'))])
             # '-p' ,'/home/dejna/PycharmProjects/CloudMesh/plugin/workspace/project/params.ini'
-            subprocess.check_call( [os.path.join(os.path.split(global_vars.plugin_dir)[0], 'mesh'), '-f',  global_vars.created_pcd[int(idx)] ,'-p' ,stlParams.save_params(join(global_vars.current_project,'params.ini'))] )
+            program = "mesh.exe"
+            if platform == "linux" or platform == "linux2":
+                # LINUX
+                program = "mesh"
+            subprocess.check_call([os.path.join(os.path.split(global_vars.plugin_dir)[0], program), '-f',
+                                   global_vars.created_pcd[int(idx)], '-p',
+                                   stlParams.save_params(join(global_vars.current_project, 'params.ini'))])
             for item in global_vars.import_stl_from_log():
                 print item
                 global_vars.add_to_stl(item)
@@ -548,6 +555,7 @@ class LaplacianPage(tk.Frame):
     def save_inputs(self):
         for key, value in self.options.items():
             stlParams.set_param(key, value[1].get())
+        self.controller.show_frame("ConfigPage")
 
 
 class PoissonPage(tk.Frame):
@@ -616,11 +624,12 @@ class AbaqusPage(Page):
 
         self.enties = []
         for i in range(0,3):
-            self.enties.append(tk.Entry(self.labelFrame , width=60))
+            self.enties.append(tk.Entry(self.labelFrame, width=90))
             self.enties[i].grid(row=i , column=1,sticky="W")
         print "stl --"+ global_vars.current_stl
+
         self.enties[0].insert(0,global_vars.current_stl)
-        self.enties[1].insert(0,get_filename_from_path(global_vars.current_stl))
+        self.enties[1].insert(0, "")
         self.enties[2].insert(0,global_vars.nodeTolerance)
 
         self.run_abaqus_stl = tk.Button(self.labelFrame, text="To Abaqus" , command =  self.stl_abaqus )

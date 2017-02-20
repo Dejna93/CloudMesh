@@ -6,7 +6,7 @@ from plugin.utils.params import stlParams
 
 if version[:3] >= '3':
     from PIL import Image, ImageTk
-from plugin.utils.oso import join
+from plugin.utils.oso import join, clean
 
 class Singelton(type):
     def __init__(cls , name , bases , dict):
@@ -71,6 +71,8 @@ class PluginConfig(object):
         self.init_project()
 
         self.title = "Import Mesh to Abaqus - Project -"
+
+        self.can_change_model = 1
 
     def setup_workspace(self):
         try:
@@ -201,7 +203,8 @@ class PluginConfig(object):
         #self.project_points_folder = os.path.join(self.current_project, "points").replace("\\","/")
         #self.project_stl_folder = os.path.join(self.current_project, "stl").replace("\\","/")
         print "UPDATE_DIR" + self.current_project
-        os.remove(join(self.project_stl_folder,'output.log'))
+        if os.path.exists(join(self.project_stl_folder, 'output.log')):
+            os.remove(join(self.project_stl_folder, 'output.log'))
 
         stlParams.set_param("points", self.project_points_folder)
         stlParams.set_param("stl",self.project_stl_folder)
@@ -264,12 +267,12 @@ class PluginConfig(object):
         stls = []
         with open( join(self.project_stl_folder,'output.log')) as file:
             for item in file.readlines():
-                stls.append(item)
+                stls.append(clean(item))
         return stls
 
 
     def add_to_stl(self, item):
-        self.created_stl.append(item)
+        self.created_stl.append(clean(item))
 
 
 

@@ -1,5 +1,7 @@
 from plugin.config import global_vars
+from plugin.utils.oso import join
 import sys
+import os
 sys.path.append('G:\SIMULIA\Abaqus\6.13-1\code\python\lib\abaqus_plugins')
 if global_vars.DEBUG == False:
     from abaqus import *
@@ -28,9 +30,21 @@ if global_vars.DEBUG == False:
         import xyPlot
         import displayGroupOdbToolset as dgo
         import connectorBehavior
-        #import stl2inp
-        #stl2inp.STL2inp(stlfile=filename,
-                   #     modelName=modelname, mergeNodesTolerance=mergeNodesTolerance)
+        sys.path.insert(11, add_to_path())
+        print "Creating model from STL"
+        print filename
+        print  modelname
+        import stl2inp
+        stl2inp.STL2inp(
+            stlfile=filename,
+            modelName=modelname, mergeNodesTolerance=1E-006)
+
+
+    def add_to_path():
+        path = join(os.path.split(os.__file__)[0], 'abaqus_plugins/stlImport')
+        if os.path.exists(path):
+            return path
+
 
 
     def make_solid(modelName,meshPartName,geoPartName,solid=True):

@@ -1,5 +1,7 @@
 import  pickle
 from collections import OrderedDict
+from plugin.utils.oso import join
+import os
 
 class Singleton(type):
     _instances = {}
@@ -31,7 +33,8 @@ class STLParams(object):
         return self.params[key]
 
     def load_param(self):
-        self.__dict__ = pickle.load(open("/home/dejna/PycharmProjects/CloudMesh/plugin/utils/stl_params.pl","rb"))
+        # self.__dict__ = pickle.load(open("/home/dejna/PycharmProjects/CloudMesh/plugin/utils/stl_params.pl","rb"))
+        self.__dict__ = pickle.load(open(join(os.path.dirname(os.path.abspath(__file__)), "stl_params.pl"), "rb"))
         self.params = OrderedDict(sorted(self.__dict__.items()))
 
     def set_param(self,key, value):
