@@ -3,7 +3,7 @@ import Tkinter as tk
 
 
 from plugin.utils.project import Project , add_project, open_project, clear_project
-from plugin.config import global_vars
+from plugin.config import storage
 
 # pages
 
@@ -17,7 +17,7 @@ class App(tk.Tk):
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
        # tk.Tk.iconbitmap(self, default=global_vars.icon)
-        tk.Tk.wm_title(self, global_vars.title)
+        tk.Tk.wm_title(self, storage.title)
         self.protocol("WM_DELETE_WINDOW", self.quit)
         container = tk.Frame(self)
         container.grid(row=0, column=0)
@@ -25,7 +25,7 @@ class App(tk.Tk):
         # container.grid_rowconfigure(0, weight=1)
         # container.grid_columnconfigure(0, weight=1)
         # global_vars.dump_vars()
-        global_vars.setup_images()
+        storage.setup_images()
 
         self.menubar = tk.Menu(self)
         self.file_menu = tk.Menu(self.menubar, tearoff=0)
@@ -52,14 +52,14 @@ class App(tk.Tk):
         frame.event_generate("<<ShowFrame>>")
 
     def quit(self):
-        global_vars.dump_last_project()
+        storage.dump_last_project()
         self.destroy()
 
 
 def run_gui(debug=False):
     app = App()
-    global_vars.DEBUG = debug
-    app.minsize(width=global_vars.window_width, height=global_vars.window_height)
+    storage.DEBUG = debug
+    app.minsize(width=storage.window_width, height=storage.window_height)
     app.mainloop()
 
 

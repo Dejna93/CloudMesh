@@ -176,4 +176,7 @@ F3.0
 sS'normal_k'
 p59
 I20
+sS'show_mesh'
+p60
+I1
 s.

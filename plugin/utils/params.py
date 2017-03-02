@@ -1,7 +1,9 @@
+import os
 import  pickle
+from xml.dom import minidom
 from collections import OrderedDict
 from plugin.utils.oso import join
-import os
+
 
 class Singleton(type):
     _instances = {}
@@ -22,15 +24,21 @@ class STLParams(object):
             self.__dict__[key]=value
 
         self.load_param()
-        self.save_params("params.ini")
-
         #pickle.dump(self.__dict__, open("stl_params.pl",'wb'))
+
+    def __init__(self, path):
+        # TODO przetestowanie
+        self.load_param(path)
 
     def getParams(self):
         return self.params
 
     def getParamByKey(self, key):
         return self.params[key]
+
+    def load_param(self, path):
+        self.__dict__ = pickle.load(open(path, 'rb'))
+        self.params = OrderedDict(sorted(self.__dict__.items()))
 
     def load_param(self):
         # self.__dict__ = pickle.load(open("/home/dejna/PycharmProjects/CloudMesh/plugin/utils/stl_params.pl","rb"))
@@ -48,12 +56,10 @@ class STLParams(object):
             file.write("[STLParams]\n")
             for key,value in self.params.items():
                 file.write(str(key)+"="+str(value)+"\n")
-        print filepath
         return filepath
 
 
 stlParams = STLParams()
-
 
 """
 stl = STLParams(visualisation=0,show_loaded=0,show_clustered=0,type_triangulation=0,savepcd=1,iterations=100,distance_threshold=0.1,scale=1.1,

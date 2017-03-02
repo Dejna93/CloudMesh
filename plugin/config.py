@@ -6,7 +6,7 @@ from plugin.utils.params import stlParams
 
 if version[:3] >= '3':
     from PIL import Image, ImageTk
-from plugin.utils.oso import join, clean
+from plugin.utils.oso import join, clean_path
 
 class Singelton(type):
     def __init__(cls , name , bases , dict):
@@ -108,7 +108,7 @@ class PluginConfig(object):
             file.write("files=")
             #for item in self.files_opened:
                 #file.write(item)
-            file.writelines(';'.join(self.files_opened))
+            # file.writelines(';'.join(self.files_opened))
             file.write('\n')
             file.write("[!StlList]\n")
             file.write("stl=")
@@ -180,9 +180,7 @@ class PluginConfig(object):
                     return file_name
         elif type =='stl':
             for file_name in self.created_stl:
-                print "get_opened_by "+name + "filename" + file_name
                 if file_name[-len(name):] == name:
-                    print "found" + file_name
                     return file_name
         return ''
 
@@ -267,16 +265,48 @@ class PluginConfig(object):
         stls = []
         with open( join(self.project_stl_folder,'output.log')) as file:
             for item in file.readlines():
-                stls.append(clean(item))
+                stls.append(clean_path(item))
         return stls
 
 
     def add_to_stl(self, item):
-        self.created_stl.append(clean(item))
+        self.created_stl.append(clean_path(item))
+
+    def add_to_pcd(self, item):
+        self.created_pcd.append(clean_path(item))
+
+    def dialog_option_txt(self):
+        options = {}
+        options['defaultextension'] = '.txt'
+        options['filetypes'] = [('Text files', '.txt'), ('Csv files', '.csv'), ('Point cloud data', '.pcd'),
+                                ('STL files', '.stl')]
+        options[
+            'initialdir'] = storage.current_project if storage.current_project != '' and storage.current_project != storage.workspace_dir else storage.workspace_dir
+        options['initialfile'] = ''
+        options['title'] = 'Open file to import'
+
+        return options
+
+    def dialog_option_stl(self):
+        options = {}
+        options['defaultextension'] = '.stl'
+        options['initialfile'] = ''
+        options['title'] = 'Open file to import'
+        options['filetypes'] = [('STL files', '.stl')]
+        options['initialdir'] = self.project_stl_folder
+        options['title'] = 'Add Stl to project'
+
+        return options
+
+    def dialog_option_pcd(self):
+        options = {}
+        options['defaultextension'] = '.stl'
+        options['initialfile'] = ''
+        options['title'] = 'Open file'
+        options['filetypes'] = [('PCD files', '.pcd')]
+        options['initialdir'] = storage.project_points_folder
+        options['title'] = 'Add PCD to project'
+        return options
 
 
-
-global_vars = PluginConfig()
-
-
-
+storage = PluginConfig()
