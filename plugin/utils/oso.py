@@ -4,14 +4,14 @@ import platform
 def join(path, *args):
     for arg in args:
         path = os.path.join(path,arg)
-    return clean(path)
+    return clean_path(path)
 
 
-def clean(item):
+def clean_path(path):
     if platform.system() == 'Windows':
-        return item.replace("\\", "/")
+        return path.replace("\\", "/")
     else:
-        return item.replace("//", "/")
+        return path.replace("//", "/")
 
 def change_ext(filename, ext):
     path , old = os.path.splitext(filename)
@@ -35,8 +35,3 @@ def get_selection(list , i):
     except IndexError:
         return -1
 
-def clean_path(path):
-    if platform.system() == 'Windows':
-        return path.replace("\\", "/")
-    else:
-        return path.replace("//", "/")

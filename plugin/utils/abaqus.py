@@ -1,9 +1,9 @@
-from plugin.config import global_vars
+from plugin.config import storage
 from plugin.utils.oso import join
 import sys
 import os
 
-if global_vars.DEBUG == False:
+if storage.DEBUG == False:
     from abaqus import *
     from abaqusConstants import *
 

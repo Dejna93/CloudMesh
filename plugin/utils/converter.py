@@ -1,7 +1,7 @@
 import os
 import csv
 from plugin.utils.oso import join
-from plugin.config import global_vars
+from plugin.config import storage
 def convert_txt_to_pcd(filename):
     print filename
     if filename[-3:] == 'txt':
@@ -42,7 +42,7 @@ def convert_csv_to_pcd(filename, type='T'):
                 folder , tail = os.path.split(filename)
                 #file_pcd = filename[:-4] + str(key) + ".pcd"
                 file_pcd = join(folder,"".join((os.path.splitext(tail)[0],key,".pcd")))
-                global_vars.created_pcd.append(file_pcd)
+                storage.created_pcd.append(file_pcd)
                 pcdheader(file_pcd,len(value))
                 write_data(file_pcd,value)
                 print file_pcd
