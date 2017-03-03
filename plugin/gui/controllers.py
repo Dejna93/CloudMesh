@@ -94,9 +94,9 @@ class ConfigController(Controller):
                 showerror("Nie wybrano pliku", "Prosze wskazać plik do otwarcia")
 
     def add_file_stl(self):
-        print "asds"
         add_file = tkFileDialog.askopenfilename(**storage.dialog_option_stl())
         if add_file != '':
+            storage.copy_file(add_file)
             storage.add_to_stl(add_file)
 
     def switch_to_stl_page(self):
@@ -115,8 +115,10 @@ class ConfigController(Controller):
                 from plugin.utils.abaqus import stl_to_abaqus
                 stl_to_abaqus(self.page.stl_list.get(item),
                               storage.get_filename_from_path(self.page.stl_list.get(item)[:-4]), "")
-        else:
+        elif storage.current_stl != "":
             self.page.controller.show_frame("AbaqusPage")
+        else:
+            print "No selected STL files"
 
     def txt_listbox_focused(self, event):
         self.page.focus_txt = event.widget
@@ -174,3 +176,11 @@ class StlController(Controller):
 
     def pcd_listbox_unfocused(self, event):
         self.page.focus = None
+
+
+class AppController(Controller):
+    def __init__(self, page):
+        Controller.__init__(self, page)
+
+    def view(self, frame):
+        self.page.controller.show_frame(frame)

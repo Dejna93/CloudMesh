@@ -47,6 +47,15 @@ def open_project(root):
         raise ValueError("Wybierz folder")
 
 
+def open_lastest_project(filepath):
+    print "ss" + str(filepath)
+    if filepath in storage.projects_dirs:
+        print "open lastest project" + filepath
+        storage.update_project_dir(filepath)
+        storage.load_assets()
+    else:
+        raise ValueError("This folder are not project`s folder")
+
 def clear_project(root):
     #TODO CLEAR PROJECT FUN
     1
@@ -77,7 +86,7 @@ class ProjectManager(object):
         else:
             self.create_subfolder(project_folder)
             storage.update_project_dir(project_folder)
-
+        storage.projects_dirs.append(project_folder)
         storage.update_point_files(self.get_files(storage.project_points_folder))
         storage.update_stl_files(self.get_files(storage.project_stl_folder))
 

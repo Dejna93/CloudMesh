@@ -40,4 +40,3 @@ class Translation(object):
 
 
 translation = Translation()
-print (translation.getValueByKey("poisson_depth"))

@@ -1,10 +1,10 @@
 # coding=UTF-8
 import Tkinter as tk
+from functools import partial
 
-
-from plugin.utils.project import Project , add_project, open_project, clear_project
+from plugin.utils.project import Project, add_project, open_project, clear_project, open_lastest_project
 from plugin.config import storage
-
+from plugin.gui.controllers import AppController
 # pages
 
 from plugin.gui.pages import StartPage, ConfigPage, STLPage, AbaqusPage
@@ -16,25 +16,33 @@ class App(tk.Tk):
 
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
-       # tk.Tk.iconbitmap(self, default=global_vars.icon)
         tk.Tk.wm_title(self, storage.title)
         self.protocol("WM_DELETE_WINDOW", self.quit)
+
         container = tk.Frame(self)
         container.grid(row=0, column=0)
-        # container.pack(side="top",fill="both", expand=True)
-        # container.grid_rowconfigure(0, weight=1)
-        # container.grid_columnconfigure(0, weight=1)
-        # global_vars.dump_vars()
         storage.setup_images()
 
         self.menubar = tk.Menu(self)
         self.file_menu = tk.Menu(self.menubar, tearoff=0)
         self.file_menu.add_command(label="New Project", command= Project.menu_add_project )
+        self.project_menu = tk.Menu(self.file_menu, tearoff=0)
+        self.file_menu.add_cascade(label="Open", menu=self.project_menu)
+        projects = storage.projects_dirs[::-1]
+        if len(projects) > 5:
+            num_gets = 5
+        else:
+            num_gets = len(projects)
+        for item in projects[:num_gets]:
+            self.project_menu.add_command(label=item, command=lambda item=item: open_lastest_project(item))
         self.file_menu.add_command(label="Clear Project", command= Project.clear_project )
         self.file_menu.add_command(label="Exit")
+        self.help_menu = tk.Menu(self.menubar, tearoff=0)
+        self.help_menu.add_command(label="Doc", command=lambda: self.show_frame("StartPage"))
+        self.help_menu.add_command(label="About", command=lambda: self.show_frame("StartPage"))
         self.menubar.add_cascade(label="Project", menu=self.file_menu)
+        self.menubar.add_cascade(label="Help", menu=self.help_menu)
         self.config(menu=self.menubar)
-
         self.frames = {}
 
         for F in (StartPage, ConfigPage, STLPage, AbaqusPage , OptionPage , LaplacianPage, PoissonPage, GreedyPage):

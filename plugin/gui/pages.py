@@ -440,3 +440,4 @@ class AbaqusPage(Page):
         if storage.DEBUG == False :
             from plugin.utils.abaqus import stl_to_abaqus
             stl_to_abaqus(params[0],params[1],params[2])
+

@@ -26,9 +26,6 @@ class STLParams(object):
         self.load_param()
         #pickle.dump(self.__dict__, open("stl_params.pl",'wb'))
 
-    def __init__(self, path):
-        # TODO przetestowanie
-        self.load_param(path)
 
     def getParams(self):
         return self.params
