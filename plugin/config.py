@@ -180,9 +180,7 @@ class PluginConfig(object):
                     return file_name
         elif type =='stl':
             for file_name in self.created_stl:
-                print "get_opened_by "+name + "filename" + file_name
                 if file_name[-len(name):] == name:
-                    print "found" + file_name
                     return file_name
         return ''
 

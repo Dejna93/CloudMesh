@@ -37,13 +37,9 @@ class StartPage(Page):
 
         about = """
         //PL
-            Plugin przeznaczony do stworzenia geometrii w Abaqusie z chmury punktów.
-        Plik z chmurą punktów powinien być rozszerzenia .txt lub .csv
-        a punkty xyz powinny być w kolumnach odzielone od siebie 'spacją lub tabulatorem' w przypadku
-        pliku txt
+            Plugin przeznaczony do generowanie PART`ów z podanego pliku tekstowego, struktura pliku dostępna w dokumentacji.
+            Autor  Damian Hołuj.
 
-        //ENG
-            TODO
         """
         self.start_labelframe = tk.LabelFrame(self, text="About", height=global_vars.dlab_height, padx=10, pady=10)
         self.start_labelframe.grid(row=0, column=0, sticky="NS", padx=10, pady=10)
@@ -81,11 +77,13 @@ class ConfigPage(Page):
         # labels
         self.labelFramse()
         self.initLabels()
-        self.initScrollList()
+        # self.initScrollList()
         self.initTxtScrollList()
+        self.initSTLList()
         self.initEntry()
         self.initButtons()
         self.manageGrid()
+
 
     def initOptions(self):
         self.fileopt = options = {}
@@ -125,6 +123,7 @@ class ConfigPage(Page):
         self.btn_4 = tk.Button(self.labelFrame_2, text="Import" , command = self.to_abaqus)
         self.btn_del = tk.Button(self.labelFrame_3, text="Del", command=self.delete)
         self.btn_add = tk.Button(self.labelFrame_3, text="Add STL" , command=self.add_stl)
+        self.btn_abaqus = tk.Button(self.labelFrame_2, text="To Abaqus", command=self.multi_to_abaqus)
 
 
 
@@ -153,6 +152,15 @@ class ConfigPage(Page):
             for files in global_vars.files_opened:
                 self.txt_list.insert(tk.END,files)
 
+    def initSTLList(self):
+        self.stl_scrollbar = tk.Scrollbar(self.labelFrame_3)
+        self.stl_list = tk.Listbox(self.labelFrame_3, yscrollcommand=self.txt_scrollbar.set, width=90,
+                                   selectmode=tk.EXTENDED)
+        self.stl_scrollbar.config(command=self.stl_list.yview)
+        self.stl_list.bind("<FocusIn>", self.stl_focused)
+        self.stl_list.bind("<FocusOut>", self.stl_unfocused)
+        self.stl_list.bind("<Double-Button-1>", self.select_stl)
+
 
     def manageGrid(self):
         self.labelFrame_1.grid(row=0, columnspan=8, sticky='WE', padx=10, pady=10)
@@ -165,16 +173,20 @@ class ConfigPage(Page):
         # ----------
         self.btn_1.grid(row=1, column=3, sticky="W", padx=10)
         self.btn_3.grid(row=3, column=5, sticky="W", padx=5)
+        self.btn_abaqus.grid(row=3, column=8, sticky="W", padx=10)
         self.btn_4.grid(row=3, column=7, sticky="W", padx=20)
-        self.btn_del.grid(row=7, column=1, sticky="E", padx=10)
-        self.btn_add.grid(row=7,column=0, sticky="E", padx=10)
+        self.btn_del.grid(row=8, column=1, sticky="E", padx=10)
+        self.btn_add.grid(row=8, column=0, sticky="E", padx=10)
         # ----------
-        self.scrollbar.grid(row=6, column=11, sticky="WE")
+        #   self.scrollbar.grid(row=6, column=11, sticky="WE")
       #  self.stlList.columnconfigure(0, weight=1)
-        self.stlList.grid(row=6, column=0,columnspan=10, sticky="WE", padx=10, pady=10)
+        # self.stlList.grid(row=6, column=0,columnspan=10, sticky="WE", padx=10, pady=10)
 
         self.txt_scrollbar.grid(row=5, column=11, sticky="WE")
         self.txt_list.grid(row=5, column=0,columnspan=10, sticky="WE", padx=10, pady=10)
+
+        self.stl_scrollbar.grid(row=7, column=11, sticky="WE")
+        self.stl_list.grid(row=7, column=0, columnspan=10, sticky="WE", padx=10, pady=10)
         # ---------
         self.entry_1.grid(row=1, column=2, sticky="E", padx=10)
 
@@ -201,9 +213,9 @@ class ConfigPage(Page):
         if self.focus_stl:
             widget = event.widget
             if len(widget.curselection()) != 0:
-                print "selection "+widget.get(widget.curselection()[0])
+                # print "selection "+widget.get(widget.curselection()[0])
                 global_vars.update_currentstl(widget.get(widget.curselection()[0]))
-                print "current_stl"+ global_vars.current_stl
+                #  print "current_stl"+ global_vars.current_stl
         else:
             print "NIE MA STLA"
     def delete(self):
@@ -214,9 +226,13 @@ class ConfigPage(Page):
             self.txt_list.delete(self.txt_list.curselection()[0])
         if not self.focus_stl:
             pass
-        if self.stlList.curselection():
-            global_vars.del_file_open(self.stlList.get(self.stlList.curselection()[0]),1)
-            self.stlList.delete(self.stlList.curselection()[0])
+            #  if self.stlList.curselection():
+            #  global_vars.del_file_open(self.stlList.get(self.stlList.curselection()[0]),1)
+            #  self.stlList.delete(self.stlList.curselection()[0])
+        if self.stl_list.curselection():
+            for selection in self.stl_list.curselection():
+                global_vars.del_file_open(self.stl_list.get(selection), 1)
+                self.stl_list.delete(selection)
 
     """  if not self.focus_stl:
           pass
@@ -272,7 +288,7 @@ class ConfigPage(Page):
         options['title'] = 'Add Stl to project'
         add_file = tkFileDialog.askopenfilename(**options)
         if add_file != '':
-            print add_file
+            # print add_file
             global_vars.add_to_stl(add_file)
 
     def get_filename_from_path(self, filepath):
@@ -299,28 +315,39 @@ class ConfigPage(Page):
     def to_abaqus(self):
         self.controller.show_frame("AbaqusPage")
 
+    def multi_to_abaqus(self):
+        for item in self.stl_list.curselection():
+            print self.stl_list.get(item)
+            if global_vars.DEBUG == False:
+                from plugin.utils.abaqus import stl_to_abaqus
+                stl_to_abaqus(self.stl_list.get(item), global_vars.get_filename_from_path(self.stl_list.get(item)[:-4]),
+                              "")
+
+        1
 
     def update(self):
         self.update_list()
         if self.focus_txt:
             self.txt_list.selection_set(get_selection(self.txt_list.curselection(), 0))
         if self.focus_stl:
-            self.stlList.selection_set(get_selection(self.stlList.curselection() ,0))
+            self.stl_list.selection_set(get_selection(self.stl_list.curselection(), 0))
         super(ConfigPage,self).update()
 
     def update_list(self):
         if not global_vars.is_same_list(self.txt_list.get(0,tk.END) , global_vars.files_opened):
-            print "update list"
+            # print "update list"
             self.txt_list.delete(0,tk.END)
             for item in sorted(global_vars.files_opened):
                 self.txt_list.insert(tk.END,item)
             #self.txt_list.selection_set(0)
 
-        if not global_vars.is_same_list(self.stlList.get(0, tk.END), global_vars.created_stl):
-            self.stlList.delete(0, tk.END)
-            print  "update stl"
+        if not global_vars.is_same_list(self.stl_list.get(0, tk.END), global_vars.created_stl):
+            #  self.stlList.delete(0, tk.END)
+            self.stl_list.delete(0, tk.END)
+            #  print  "update stl"
             for item in sorted(global_vars.created_stl):
-                self.stlList.insert(tk.END, item)
+                # self.stlList.insert(tk.END, item)
+                self.stl_list.insert(tk.END, item)
 
     def update_title(self):
         self.controller.wm_title(global_vars.title +  '/'.join(global_vars.current_project.split('/')[-4:]))
@@ -352,15 +379,15 @@ class STLPage(Page):
         self.labels = []
         self.buttons = []
 
-        self.labels.append(tk.Label(labelFrame, text="Option" ))
+        self.labels.append(tk.Label(labelFrame, text="General"))
         self.labels.append(tk.Label(labelFrame, text="Laplacian Triangulation"))
         self.labels.append(tk.Label(labelFrame, text="Poisson Triangulation"))
-        self.labels.append(tk.Label(labelFrame, text="Greedy Triangulation"))
+        # self.labels.append(tk.Label(labelFrame, text="Greedy Triangulation"))
 
         self.buttons.append(tk.Button(labelFrame, text="Option", command=lambda: self.change_option(0)))
         self.buttons.append(tk.Button(labelFrame, text="Option", command=lambda: self.change_option(1)))
         self.buttons.append(tk.Button(labelFrame, text="Option", command=lambda: self.change_option(2)))
-        self.buttons.append(tk.Button(labelFrame, text="Option", command=lambda: self.change_option(3)))
+        #  self.buttons.append(tk.Button(labelFrame, text="Option", command=lambda: self.change_option(3)))
 
         for i in range(0,len(self.labels)):
             self.labels[i].grid(row = i + 1 , column=0, sticky="W")
@@ -375,6 +402,9 @@ class STLPage(Page):
         pcd_scrollbar = tk.Scrollbar(self.pcdFrame)
         self.pcd_list = tk.Listbox(self.pcdFrame, listvariable=[], yscrollcommand=pcd_scrollbar.set,
                                    width=90, selectmode=tk.EXTENDED)
+        self.pcd_list.bind("<FocusIn>", self.focused)
+        self.pcd_list.bind("<FocusOut>", self.unfocused)
+
         pcd_scrollbar.config(command=self.pcd_list.yview)
         self.update_list()
         self.pcd_list.grid(row=1, column=0, sticky="W")
@@ -383,7 +413,7 @@ class STLPage(Page):
         # GRID
         label_pcd.grid(row=0, column=0, sticky="W")
         # DEF Entry
-
+        self.focus = None
 
         # BTN
         button_1 = tk.Button(labelFrame, text="Make STL", command=lambda: self.stl_run())
@@ -391,7 +421,8 @@ class STLPage(Page):
 
         del_btn = tk.Button(self.pcdFrame, text="Del", command=self.delete)
         del_btn.grid(row=0, column=2, sticky="E")
-
+        add_btn = tk.Button(self.pcdFrame, text="Add", command=self.add_pcd)
+        add_btn.grid(row=0, column=3, sticky="E")
         button_1.grid(row=9, column=2, sticky="W")
         button_2.grid(row=9, column=3, sticky="E")
 
@@ -407,22 +438,45 @@ class STLPage(Page):
                 self.pcd_list.delete(ind, ind)
                 pos = pos + 1
 
+    def add_pcd(self):
+        options = {}
+        options['defaultextension'] = '.stl'
+        options['initialfile'] = ''
+        options['parent'] = self
+        options['title'] = 'Open file'
+        options['filetypes'] = [('PCD files', '.pcd')]
+        options['initialdir'] = global_vars.project_points_folder
+        options['title'] = 'Add PCD to project'
+        add_file = tkFileDialog.askopenfilename(**options)
+        if add_file != '':
+            # print add_file
+            global_vars.created_pcd.append(add_file)
+
+    def focused(self, event):
+        self.focus = event.widget
+
+    def unfocused(self, event):
+        self.focus = None
+
+
     def update_list(self):
+        if (global_vars.current_filename[-3:] == 'pcd') & (global_vars.current_filename not in global_vars.created_pcd):
+            self.pcd_list.delete(0, tk.END)
+            self.pcd_list.insert(tk.END, global_vars.current_filename)
+            global_vars.created_pcd.append(global_vars.current_filename)
         if not global_vars.is_same_list(self.pcd_list.get(0, tk.END) , global_vars.created_pcd):
-            print "update list"
             self.pcd_list.delete(0 , tk.END)
             if global_vars.created_pcd:
                 for item in global_vars.created_pcd:
                     self.pcd_list.insert(tk.END, item)
 
     def update(self):
+        selected = self.pcd_list.curselection()
         self.update_list()
-        if len(self.pcd_list.get(0,tk.END)):
-           # print "select"
-            #print get_selection(self.pcd_list.curselection() ,0)
-            new_selection = get_selection(self.pcd_list.curselection() ,0)
-            if new_selection >= 0:
-                self.pcd_list.selection_set(new_selection)
+        if self.focus:
+            self.pcd_list.selection_set(selected[0])
+        # if len(self.pcd_list.get(0,tk.END)):
+        #self.pcd_list.selection_set(get_selection(self.pcd_list.curselection() ,0))
         super(STLPage, self).update()
 
         #self.after(1000,self.update)
@@ -439,18 +493,8 @@ class STLPage(Page):
             self.controller.show_frame("GreedyPage")
 
     def stl_run(self):
-        # file_list = self.pcd_list.curselection()
         # dodawanie parametow do triangulizacji
-
         for idx in self.pcd_list.curselection():
-            print idx
-           # print [os.path.join(os.path.split(global_vars.plugin_dir)[0], 'mesh.exe'), '-f',
-             #   global_vars.created_pcd[int(idx)] ,'-p' ,stlParams.save_params(join(global_vars.current_project, 'params.ini' )) ]
-            #subprocess.check_call(
-              #  [os.path.join(os.path.split(global_vars.plugin_dir)[0], 'mesh.exe'), '-f',
-              #   global_vars.created_pcd[int(idx)], '-p',
-               #  stlParams.save_params(join(global_vars.current_project, 'params.ini'))])
-            # '-p' ,'/home/dejna/PycharmProjects/CloudMesh/plugin/workspace/project/params.ini'
             program = "mesh.exe"
             if platform == "linux" or platform == "linux2":
                 # LINUX
@@ -459,12 +503,7 @@ class STLPage(Page):
                                    global_vars.created_pcd[int(idx)], '-p',
                                    stlParams.save_params(join(global_vars.current_project, 'params.ini'))])
             for item in global_vars.import_stl_from_log():
-                print item
                 global_vars.add_to_stl(item)
-                #global_vars.created_stl.append(item)
-            #copy2(change_ext( global_vars.created_pcd[int(idx)], '.stl'), global_vars.project_stl_folder)
-
-           # global_vars.created_stl.append(change_ext( global_vars.created_pcd[int(idx)], '.stl'))
 
 class OptionPage(tk.Frame):
 
@@ -486,6 +525,8 @@ class OptionPage(tk.Frame):
             "normal_radius" :[tk.Label(self.labelFrame , text="Radius for search normals" ), tk.Entry(self.labelFrame) ],
             "normal_centroid" : [tk.Label(self.labelFrame , text="Calculate from centroid" ), tk.Entry(self.labelFrame) ],
             "normal_minus" : [tk.Label(self.labelFrame , text="Recalucate normals with minus"), tk.Entry(self.labelFrame) ],
+            "show_mesh": [tk.Label(self.labelFrame, text="Show surface before save to STL"),
+                          tk.Entry(self.labelFrame)],
         }
         i = 0
         for key,value in self.options.items():
@@ -555,7 +596,7 @@ class LaplacianPage(tk.Frame):
     def save_inputs(self):
         for key, value in self.options.items():
             stlParams.set_param(key, value[1].get())
-        self.controller.show_frame("ConfigPage")
+        self.controller.show_frame("STLPage")
 
 
 class PoissonPage(tk.Frame):
@@ -602,6 +643,7 @@ class PoissonPage(tk.Frame):
     def save_inputs(self):
         for key, value in self.options.items():
             stlParams.set_param(key, value[1].get())
+            self.controller.show_frame("STLPage")
 
 class GreedyPage(tk.Frame):
     def __init__(self, parent , controller):
@@ -625,8 +667,8 @@ class AbaqusPage(Page):
         self.enties = []
         for i in range(0,3):
             self.enties.append(tk.Entry(self.labelFrame, width=90))
-            self.enties[i].grid(row=i , column=1,sticky="W")
-        print "stl --"+ global_vars.current_stl
+            self.enties[i].grid(row=i, column=1, sticky="W")
+        #print "stl --"+ global_vars.current_stl
 
         self.enties[0].insert(0,global_vars.current_stl)
         self.enties[1].insert(0, "")
@@ -651,7 +693,7 @@ class AbaqusPage(Page):
 
         for item in self.enties:
             params.append(item.get())
-        print params
+            #  print params
 
         if global_vars.DEBUG==False :
             from plugin.utils.abaqus import stl_to_abaqus
