@@ -1,0 +1,99 @@
+<strings>
+    <string>
+        <key>poisson_depth</key>
+        <category>PoissonPage</category>
+        <text>Set the maximum depth of the tree that will be used for surface reconstruction</text>
+    </string>
+    <string>
+        <key>poisson_iso_divide</key>
+        <category>PoissonPage</category>
+        <text>Set the depth at which a block iso-surface extractor should be used to extract the iso-surface.</text>
+    </string>
+    <string>
+        <key>poisson_confidence</key>
+        <category>PoissonPage</category>
+        <text>Number max iteration.</text>
+    </string>
+    <string>
+        <key>poisson_radius</key>
+        <category>PoissonPage</category>
+        <text>Radius for search normals.</text>
+    </string>
+    <string>
+        <key>poisson_samples_per_node</key>
+        <category>PoissonPage</category>
+        <text>Get the minimum number of sample points that should fall within an octree node as the octree construction
+            is adapted to sampling density.
+        </text>
+    </string>
+    <string>
+        <key>poisson_solver_divide</key>
+        <category>PoissonPage</category>
+        <text>Set the the depth at which a block Gauss-Seidel solver is used to solve the Laplacian equation.</text>
+    </string>
+    <string>
+        <key>lap_max_iter</key>
+        <category>LaplacianPage</category>
+        <text>Number max iteration.</text>
+    </string>
+    <string>
+        <key>lap_convergence</key>
+        <category>LaplacianPage</category>
+        <text>Specify a convergence criterion for the iteration process.</text>
+    </string>
+    <string>
+        <key>lap_relaxation_factor</key>
+        <category>LaplacianPage</category>
+        <text>Specify the relaxation factor for Laplacian smoothing.</text>
+    </string>
+    <string>
+        <key>lap_edge_smoothing</key>
+        <category>LaplacianPage</category>
+        <text>Specify the edge angle to control smoothing along edges.</text>
+    </string>
+    <string>
+        <key>lap_boundary_smoothing</key>
+        <category>LaplacianPage</category>
+        <text>Turn on/off the smoothing of vertices on the boundary of the mesh.</text>
+    </string>
+    <string>
+        <key>show_clustered</key>
+        <category>OptionPage</category>
+        <text>Show clusters.</text>
+    </string>
+    <string>
+        <key>show_loaded</key>
+        <category>OptionPage</category>
+        <text>Show loaded cloud.</text>
+    </string>
+    <string>
+        <key>thread_num</key>
+        <category>OptionPage</category>
+        <text>Thread number.</text>
+    </string>
+    <string>
+        <key>visualisation</key>
+        <category>OptionPage</category>
+        <text>Visualization of point cloud.</text>
+    </string>
+    <string>
+        <key>normal_radius</key>
+        <category>OptionPage</category>
+        <text>Radius for search normals.</text>
+    </string>
+    <string>
+        <key>normal_centroid</key>
+        <category>OptionPage</category>
+        <text>Calculate from centroid.</text>
+    </string>
+    <string>
+        <key>normal_minus</key>
+        <category>OptionPage</category>
+        <text>Recalucate normals with minus.</text>
+    </string>
+    <string>
+        <key>show_mesh</key>
+        <category>OptionPage</category>
+        <text>Show surface before save to STL.</text>
+    </string>
+</strings>

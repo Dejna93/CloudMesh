@@ -1,7 +1,7 @@
 import os
 import csv
 from plugin.utils.oso import join
-from plugin.config import global_vars
+from plugin.config import storage
 def convert_txt_to_pcd(filename):
     print filename
     if filename[-3:] == 'txt':
@@ -23,14 +23,15 @@ def convert_csv_to_pcd(filename, type='T'):
         try:
             csv_reader = csv.reader(file)
             for row in csv_reader:
+                temp = list(row)
+                if len(temp) == 3:
+                    type = 'N'
                 if type == 'T':
-                    temp = list(row)
                     if temp[-1] in data:
                         data[temp[-1]].append(temp[0:3])
                     else:
                         data[temp[-1]] = [temp[0:3]]
                 else:
-                    temp = list(row)
                     data["0"].append(temp[0:3])
 
         finally:
@@ -41,8 +42,7 @@ def convert_csv_to_pcd(filename, type='T'):
                 folder , tail = os.path.split(filename)
                 #file_pcd = filename[:-4] + str(key) + ".pcd"
                 file_pcd = join(folder,"".join((os.path.splitext(tail)[0],key,".pcd")))
-                print filename
-                global_vars.created_pcd.append(file_pcd)
+                storage.created_pcd.append(file_pcd)
                 pcdheader(file_pcd,len(value))
                 write_data(file_pcd,value)
                 print file_pcd
