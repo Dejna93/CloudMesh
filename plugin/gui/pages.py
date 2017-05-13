@@ -1,24 +1,25 @@
 # coding=UTF-8
-
-from math import pi
 import Tkinter as tk
+import ttk
 from plugin.config import storage
 from plugin.utils.inputs import input_validator
 from plugin.utils.oso import get_selection
-
 from plugin.gui.controllers import ConfigController, StlController
-from plugin.utils.params import stlParams
+from plugin.utils.params import stlParams, Setting
 from plugin.utils.translation import Translation
 
 __metaclass__ = type
 
+
 class Page(tk.Frame, object):
-    def __init__(self, parent ):
-        tk.Frame.__init__(self,parent)
+    def __init__(self, parent):
+        tk.Frame.__init__(self, parent)
         self.parent = parent
 
     def update(self):
+        # type: () -> object
         self.after(1000, self.update)
+
 
 class StartPage(Page):
     def __init__(self, parent, controller):
@@ -26,12 +27,13 @@ class StartPage(Page):
         self.parent = parent
         self.controller = controller
 
-        about = """
-        //PL
-            Plugin przeznaczony do generowanie PART`ów z podanego pliku tekstowego, struktura pliku dostępna w dokumentacji.
-            Autor  Damian Hołuj.
-
-        """
+        about = ("\n"
+                 "//PL\n"
+                 "Plugin przeznaczony do generowanie PART`ów z podanego pliku tekstowego, "
+                 "struktura pliku dostępna w dokumentacji.\n"
+                 "Autor  Damian Hołuj.\n"
+                 "\n"
+                 "        ")
         self.start_labelframe = tk.LabelFrame(self, text="About", height=storage.dlab_height, padx=10, pady=10)
         self.start_labelframe.grid(row=0, column=0, sticky="NS", padx=10, pady=10)
 
@@ -43,12 +45,8 @@ class StartPage(Page):
         button2 = tk.Button(self.start_labelframe, text="Quit", command=lambda: StartPage.quit(self))
         button2.grid(row=1, column=2)
 
-
-
     def update(self):
-
-        super(StartPage,self).update()
-
+        super(StartPage, self).update()
 
 
 class ConfigPage(Page):
@@ -62,43 +60,26 @@ class ConfigPage(Page):
         self.focus_stl = None
         self.focus_txt = None
 
-        # labels
-        self.labelFramse()
-        self.initLabels()
-
-        self.initTxtScrollList()
-        self.initSTLList()
-        self.initEntry()
-        self.initButtons()
-        self.manageGrid()
-
-
-    def labelFramse(self):
+        # labels_frames
         self.labelFrame_1 = tk.LabelFrame(self, text="Specify Txt File", padx=10, pady=10)
         self.labelFrame_2 = tk.LabelFrame(self, text="Operations", padx=10, pady=10)
         self.labelFrame_3 = tk.LabelFrame(self, text="STL file", padx=10, pady=10)
 
-    def initLabels(self):
+        # labels
         self.label_1 = tk.Label(self.labelFrame_1, text="Txt file name", bg="white")
         self.label_3 = tk.Label(self.labelFrame_2, text="Create STL")
         self.label_4 = tk.Label(self.labelFrame_2, text="STL to Abaqus")
-
-    def initEntry(self):
+        # entry
         self.entry_1 = tk.Entry(self.labelFrame_1, bd=2, width=70)
         if storage.current_filename:
             self.entry_1.insert(0, storage.current_filename)
-
-    def initButtons(self):
+        # buttons
         self.btn_1 = tk.Button(self.labelFrame_1, text="Open", command=self.cls.add_file_txt)
-        self.btn_3 = tk.Button(self.labelFrame_2, text="Convert",
-                               command=self.cls.switch_to_stl_page)  # self.check_filepath(self.controller))
+        self.btn_3 = tk.Button(self.labelFrame_2, text="Convert", command=self.cls.switch_to_stl_page)
         self.btn_4 = tk.Button(self.labelFrame_2, text="Import to Abaqus", command=self.cls.switch_to_abaqus_page)
         self.btn_del = tk.Button(self.labelFrame_3, text="Del", command=self.cls.delete_item)
         self.btn_add = tk.Button(self.labelFrame_3, text="Add STL", command=self.cls.add_file_stl)
-
-
-    def initTxtScrollList(self):
-
+        # txt scrollbar
         self.txt_scrollbar = tk.Scrollbar(self.labelFrame_3)
         self.txt_list = tk.Listbox(self.labelFrame_3, listvariable=storage.files_opened,
                                    yscrollcommand=self.txt_scrollbar.set, width=90)
@@ -106,10 +87,8 @@ class ConfigPage(Page):
         self.txt_list.bind("<FocusIn>", self.cls.txt_listbox_focused)
         self.txt_list.bind("<FocusOut>", self.cls.txt_listbox_unfocused)
         self.txt_list.bind("<Double-Button-1>", self.cls.select_listbox_txt)
-
         self.fill_listbox(self.txt_list, storage.files_opened)
-
-    def initSTLList(self):
+        # stl scrollbar
         self.stl_scrollbar = tk.Scrollbar(self.labelFrame_3)
         self.stl_list = tk.Listbox(self.labelFrame_3, yscrollcommand=self.txt_scrollbar.set, width=90,
                                    selectmode=tk.EXTENDED)
@@ -117,15 +96,11 @@ class ConfigPage(Page):
         self.stl_list.bind("<FocusIn>", self.cls.stl_listbox_focused)
         self.stl_list.bind("<FocusOut>", self.cls.stl_listbox_unfocused)
         self.stl_list.bind("<Double-Button-1>", self.cls.select_listbox_stl)
-
         self.fill_listbox(self.stl_list, storage.created_stl)
+        # create view for widgets
+        self.create_view()
 
-    def fill_listbox(self, listbox, list):
-        if list:
-            for files in list:
-                listbox.insert(tk.END, files)
-
-    def manageGrid(self):
+    def create_view(self):
         self.labelFrame_1.grid(row=0, columnspan=8, sticky='WE', padx=10, pady=10)
         self.labelFrame_2.grid(row=2, column=0, sticky="WE", padx=10, pady=10)
         self.labelFrame_3.grid(row=4, column=0, sticky="WE", padx=10, pady=10)
@@ -141,14 +116,19 @@ class ConfigPage(Page):
         self.btn_add.grid(row=8, column=0, sticky="E", padx=10)
         # ----------
         self.txt_scrollbar.grid(row=5, column=11, sticky="WE")
-        self.txt_list.grid(row=5, column=0,columnspan=10, sticky="WE", padx=10, pady=10)
+        self.txt_list.grid(row=5, column=0, columnspan=10, sticky="WE", padx=10, pady=10)
 
         self.stl_scrollbar.grid(row=7, column=11, sticky="WE")
         self.stl_list.grid(row=7, column=0, columnspan=10, sticky="WE", padx=10, pady=10)
         # ---------
         self.entry_1.grid(row=1, column=2, sticky="E", padx=10)
 
-
+    # TODO check correct
+    @staticmethod
+    def fill_listbox(listbox, arr):
+        if arr:
+            for files in arr:
+                listbox.insert(tk.END, files)
 
     def update(self):
         if not storage.is_same_list(self.txt_list.get(0, tk.END), storage.files_opened):
@@ -165,7 +145,7 @@ class ConfigPage(Page):
             self.txt_list.selection_set(get_selection(self.txt_list.curselection(), 0))
         if self.focus_stl:
             self.stl_list.selection_set(get_selection(self.stl_list.curselection(), 0))
-        super(ConfigPage,self).update()
+        super(ConfigPage, self).update()
 
 
 class STLPage(Page):
@@ -174,28 +154,27 @@ class STLPage(Page):
         self.controller = controller
         self.cls = StlController(self)
 
-        labelFrame = tk.LabelFrame(self, text="Triangulation options", width=storage.dlab_width,
-                                   height=storage.dlab_height, padx=10, pady=10)
-        labelFrame.grid(row=0, column=2, sticky='W', padx=10, pady=10, ipadx=5, ipady=5)
+        label_frame = tk.LabelFrame(self, text="Triangulation options", width=storage.dlab_width,
+                                    height=storage.dlab_height, padx=10, pady=10)
+        label_frame.grid(row=0, column=2, sticky='W', padx=10, pady=10, ipadx=5, ipady=5)
         self.pcdFrame = tk.LabelFrame(self, text="PCD Files", width=storage.dlab_width, padx=10, pady=10)
         self.pcdFrame.grid(row=1, column=0, columnspan=4, sticky="WE", padx=10, pady=10)
 
         self.buttons = []
 
-        # self.labels.append(tk.Label(labelFrame, text="Greedy Triangulation"))
+        # self.labels.append(tk.Label(label_frame, text="Greedy Triangulation"))
 
-        self.buttons.append(tk.Button(labelFrame, text="General", width=35, command=lambda: self.change_option(0)))
+        self.buttons.append(tk.Button(label_frame, text="General", width=35, command=lambda: self.change_option(0)))
         self.buttons.append(
-            tk.Button(labelFrame, text="Laplacian Triangulation", width=35, command=lambda: self.change_option(1)))
+            tk.Button(label_frame, text="Laplacian Triangulation", width=35, command=lambda: self.change_option(1)))
         self.buttons.append(
-            tk.Button(labelFrame, text="Poisson Triangulation", width=35, command=lambda: self.change_option(2)))
-        #  self.buttons.append(tk.Button(labelFrame, text="Option", command=lambda: self.change_option(3)))
+            tk.Button(label_frame, text="Poisson Triangulation", width=35, command=lambda: self.change_option(2)))
+        #  self.buttons.append(tk.Button(label_frame, text="Option", command=lambda: self.change_option(3)))
 
         for i in range(0, len(self.buttons)):
             # self.labels[i].grid(row = i + 1 , column=0, sticky="W")
             self.buttons[i].grid(row=i + 1, column=0, columnspan=2, sticky="W")
 
-        initialVars = (0.025, 2.5, 100, pi / 4, pi / 18, 2 * pi / 3, 0)
         self.checkInt = tk.IntVar()
         self.checkInt.set(0)
 
@@ -218,8 +197,8 @@ class STLPage(Page):
         self.focus = None
 
         # BTN
-        button_1 = tk.Button(labelFrame, text="Make STL", width=15, command=self.cls.run_external_exec)
-        button_2 = tk.Button(labelFrame, text="Back", width=15, command=self.cls.back_page)
+        button_1 = tk.Button(label_frame, text="Make STL", width=15, command=self.cls.run_external_exec)
+        button_2 = tk.Button(label_frame, text="Back", width=15, command=self.cls.back_page)
 
         del_btn = tk.Button(self.pcdFrame, text="Delete", width=15, command=self.cls.delete_item)
         del_btn.grid(row=2, column=1, sticky="E")
@@ -230,14 +209,13 @@ class STLPage(Page):
 
         self.update()
 
-
     def update_list(self):
         if (storage.current_filename[-3:] == 'pcd') & (storage.current_filename not in storage.created_pcd):
             self.pcd_list.delete(0, tk.END)
             self.pcd_list.insert(tk.END, storage.current_filename)
             storage.created_pcd.append(storage.current_filename)
         if not storage.is_same_list(self.pcd_list.get(0, tk.END), storage.created_pcd):
-            self.pcd_list.delete(0 , tk.END)
+            self.pcd_list.delete(0, tk.END)
             if storage.created_pcd:
                 for item in storage.created_pcd:
                     self.pcd_list.insert(tk.END, item)
@@ -248,75 +226,69 @@ class STLPage(Page):
         if self.focus and len(selected) != 0:
             self.pcd_list.selection_set(selected[0])
         # if len(self.pcd_list.get(0,tk.END)):
-        #self.pcd_list.selection_set(get_selection(self.pcd_list.curselection() ,0))
+        # self.pcd_list.selection_set(get_selection(self.pcd_list.curselection() ,0))
         super(STLPage, self).update()
 
-        #self.after(1000,self.update)
+        # self.after(1000,self.update)
 
-    def change_option(self, id):
-        print "change " + str(id)
-        if (id == 0):
+    def change_option(self, page_id):
+        if page_id == 0:
             self.controller.show_frame("OptionPage")
-        if (id == 1):
+        if page_id == 1:
             self.controller.show_frame("LaplacianPage")
-        if (id == 2):
+        if page_id == 2:
             self.controller.show_frame("PoissonPage")
-        if (id == 3):
+        if page_id == 3:
             self.controller.show_frame("GreedyPage")
 
 
 class OptionPage(Page):
-
-    def __init__(self, parent , controller):
+    def __init__(self, parent, controller):
         Page.__init__(self, parent)
         self.controller = controller
         self.labelFrame = tk.LabelFrame(self, text="Main options for cpp", width=storage.dlab_width,
                                         height=storage.dlab_height, padx=10, pady=10)
         self.labelFrame.grid(row=0, column=0, sticky="NWSE", padx=10, pady=10, ipadx=5, ipady=5)
 
-        self.option_dict = Translation().getDictByCategory("OptionPage")
+        self.option_dict = Translation().get_dict_by_category("OptionPage")
         self.options = {}
 
         for key, value in self.option_dict.items():
             self.options[key] = [tk.Label(self.labelFrame, text=value), tk.Entry(self.labelFrame)]
 
         i = 0
-        for key,value in self.options.items():
-            self.options[key][0].grid(row = i + 1 , column = 0 , sticky="W")
-            self.options[key][1].grid(row = i + 1 , column = 1 , sticky="W")
-            self.options[key][1].insert(tk.END, stlParams.getParamByKey(key))
+        for key, value in self.options.items():
+            self.options[key][0].grid(row=i + 1, column=0, sticky="W")
+            self.options[key][1].grid(row=i + 1, column=1, sticky="W")
+            self.options[key][1].insert(tk.END, stlParams.get_params_key(key))
             self.options[key][1].bind("<KeyPress>", input_validator)
-
-            i = i + 1
-
+            i += 1
 
         # BTN
-        button_1 = tk.Button(self.labelFrame, text="Done", command = self.save_inputs)
+        button_1 = tk.Button(self.labelFrame, text="Done", command=self.save_inputs)
         button_2 = tk.Button(self.labelFrame, text="Back", command=lambda: controller.show_frame("STLPage"))
 
-        button_1.grid(row=len(self.options) + 1,column = 1 , sticky="W")
-        button_2.grid(row=len(self.options) + 1,column = 0 , sticky="W")
+        button_1.grid(row=len(self.options) + 1, column=1, sticky="W")
+        button_2.grid(row=len(self.options) + 1, column=0, sticky="W")
 
     def save_inputs(self):
         for key, value in self.options.items():
-            stlParams.set_param(key,value[1].get())
+            stlParams.set_param(key, value[1].get())
+        self.show_correct_triangulation(stlParams.get_params_key("type_triangulation"))
 
-        self.show_correct_triangulation(stlParams.getParamByKey("type_triangulation"))
-
-    def show_correct_triangulation(self, id):
-        print id
-        if (id == "0" ):
+    def show_correct_triangulation(self, page_id):
+        if page_id == "0":
             self.controller.show_frame("LaplacianPage")
-        elif (id == "1"):
+        elif page_id == "1":
             self.controller.show_frame("PoissonPage")
-        elif (id == "2"):
+        elif page_id == "2":
             self.controller.show_frame("GreedyPage")
         else:
             print "Wrong type triangulation [0-2]!"
 
 
 class LaplacianPage(Page):
-    def __init__(self, parent , controller):
+    def __init__(self, parent, controller):
         Page.__init__(self, parent)
         self.controller = controller
         self.labelFrame = tk.LabelFrame(self, text="Laplacian VTK params", width=storage.dlab_width,
@@ -325,7 +297,7 @@ class LaplacianPage(Page):
 
         self.options = {}
 
-        self.laplacian_dict = Translation().getDictByCategory("PoissonPage")
+        self.laplacian_dict = Translation().get_dict_by_category("PoissonPage")
 
         for key, value in self.laplacian_dict.items():
             self.options[key] = [tk.Label(self.labelFrame, text=value), tk.Entry(self.labelFrame)]
@@ -334,9 +306,9 @@ class LaplacianPage(Page):
         for key, value in self.options.items():
             self.options[key][0].grid(row=i + 1, column=0, sticky="W")
             self.options[key][1].grid(row=i + 1, column=1, sticky="W")
-            self.options[key][1].insert(tk.END, stlParams.getParamByKey(key))
+            self.options[key][1].insert(tk.END, stlParams.get_params_key(key))
             self.options[key][1].bind("<KeyPress>", input_validator)
-            i = i + 1
+            i += 1
 
         # BTN
         button_1 = tk.Button(self.labelFrame, text="Done", command=self.save_inputs)
@@ -352,14 +324,14 @@ class LaplacianPage(Page):
 
 
 class PoissonPage(Page):
-    def __init__(self, parent , controller):
+    def __init__(self, parent, controller):
         Page.__init__(self, parent)
         self.controller = controller
         self.labelFrame = tk.LabelFrame(self, text="Poisson params", width=storage.dlab_width,
                                         height=storage.dlab_height, padx=10, pady=10)
         self.labelFrame.grid(row=0, column=0, sticky="NWSE", padx=10, pady=10, ipadx=5, ipady=5)
 
-        self.poisson_dict = Translation().getDictByCategory("PoissonPage")
+        self.poisson_dict = Translation().get_dict_by_category("PoissonPage")
 
         self.options = {}
         for key, value in self.poisson_dict.items():
@@ -369,9 +341,9 @@ class PoissonPage(Page):
         for key, value in self.options.items():
             self.options[key][0].grid(row=i + 1, column=0, sticky="W")
             self.options[key][1].grid(row=i + 1, column=1, sticky="W")
-            self.options[key][1].insert(tk.END, stlParams.getParamByKey(key))
+            self.options[key][1].insert(tk.END, stlParams.get_params_key(key))
             self.options[key][1].bind("<KeyPress>", input_validator)
-            i = i + 1
+            i += 1
 
         # BTN
         button_1 = tk.Button(self.labelFrame, text="Done", command=self.save_inputs)
@@ -386,41 +358,36 @@ class PoissonPage(Page):
             self.controller.show_frame("STLPage")
 
 
-class GreedyPage(Page):
-    def __init__(self, parent , controller):
-        Page.__init__(self, parent)
-
-
 class AbaqusPage(Page):
     def __init__(self, parent, controller):
         Page.__init__(self, parent)
         self.labelFrame = tk.LabelFrame(self, text="STL settings for import", width=storage.dlab_width,
                                         height=storage.dlab_height, padx=10, pady=10)
-        self.labelFrame.grid(row=0 , column=0, sticky="NWSE", padx=10, pady=10, ipadx=5, ipady=5)
+        self.labelFrame.grid(row=0, column=0, sticky="NWSE", padx=10, pady=10, ipadx=5, ipady=5)
 
-        self.nameLabel = tk.Label(self.labelFrame , text="File")
+        self.nameLabel = tk.Label(self.labelFrame, text="File")
         self.modelLabel = tk.Label(self.labelFrame, text="Model name")
         self.nodeLabel = tk.Label(self.labelFrame, text="Merge tolerance")
 
-        self.nameLabel.grid(row=0,column=0 , sticky="E" , padx=10)
-        self.modelLabel.grid(row=1,column=0,sticky="E",  padx=10)
-        self.nodeLabel.grid(row=2,column=0 , sticky="E",  padx=10)
+        self.nameLabel.grid(row=0, column=0, sticky="E", padx=10)
+        self.modelLabel.grid(row=1, column=0, sticky="E", padx=10)
+        self.nodeLabel.grid(row=2, column=0, sticky="E", padx=10)
 
         self.enties = []
-        for i in range(0,3):
+        for i in range(0, 3):
             self.enties.append(tk.Entry(self.labelFrame, width=90))
             self.enties[i].grid(row=i, column=1, sticky="W")
-        #print "stl --"+ global_vars.current_stl
+        # print "stl --"+ global_vars.current_stl
 
         self.enties[0].insert(0, storage.current_stl)
         self.enties[1].insert(0, "")
         self.enties[2].insert(0, storage.nodeTolerance)
 
-        self.run_abaqus_stl = tk.Button(self.labelFrame, text="To Abaqus" , command =  self.stl_abaqus )
-        self.run_abaqus_stl.grid(row=3,column=1,sticky="EW", padx=10,pady=10)
+        self.run_abaqus_stl = tk.Button(self.labelFrame, text="To Abaqus", command=self.stl_abaqus)
+        self.run_abaqus_stl.grid(row=3, column=1, sticky="EW", padx=10, pady=10)
 
         self.back_btn = tk.Button(self.labelFrame, text="Back", command=lambda: controller.show_frame("ConfigPage"))
-        self.back_btn.grid(row=3,column=0, sticky="E", padx=10,pady=10)
+        self.back_btn.grid(row=3, column=0, sticky="E", padx=10, pady=10)
 
     def update_enties(self):
         self.enties[0].delete(0, tk.END)
@@ -437,7 +404,45 @@ class AbaqusPage(Page):
             params.append(item.get())
             #  print params
 
-        if storage.DEBUG == False :
-            from plugin.utils.abaqus import stl_to_abaqus
-            stl_to_abaqus(params[0],params[1],params[2])
+        if not storage.DEBUG:
+            try:
+                from plugin.utils.abaqus import stl_to_abaqus
+            except ImportError:
+                stl_to_abaqus = None
+            stl_to_abaqus(params[0], params[1], params[2])
 
+
+class SettingsPage(Page):
+    def __init__(self, parent, controller):
+        Page.__init__(self, parent)
+        self.controller = controller
+        self.tree = ttk.Treeview(self)
+        self.settings = Setting(self.tree)
+        self.tree.bind('<<TreeviewSelect>>', self.on_tree_select)
+
+        self.tree["columns"] = "value",
+
+        self.tree.column("value", width=300)
+        self.tree.heading("value", text="Value")
+
+        self.edit_btn = tk.Button(self, text="Edit")
+        self.del_btn = tk.Button(self, text="Del")
+        self.tree.pack(fill=tk.BOTH)
+        self.edit_btn.pack(side=tk.LEFT, expand=1, fill=tk.X)
+        self.del_btn.pack(side=tk.RIGHT, expand=1, fill=tk.X)
+
+        # self.tree.insert("",1,"cos",text="123123",value=(123,11))
+        # id2 = self.tree.insert("", 1, "dir2", text="Dir 2")
+        # self.tree.insert(id2, "end", "dir 2", text="sub dir 2", values=("2A", "2B"))
+
+    def on_tree_select(self, event):
+        print event
+        for item in self.tree.selection():
+            # item_text = self.tree.item(item,"text")
+            text = self.tree.item(item)
+            print text
+            self.edit_item(text, item)
+
+    def edit_item(self, item, index):
+        item['value'] = '0.4'
+        self.tree.set(index, item)

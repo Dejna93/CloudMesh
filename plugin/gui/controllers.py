@@ -59,7 +59,6 @@ class ConfigController(Controller):
         if storage.workspace_dir == storage.current_project or storage.current_project == '':
             showerror("Nie wybrano projektu", "Prosze wybrać projekt w ktorym \n beda zapisywac sie dane")
         else:
-
             add_file = tkFileDialog.askopenfilename(**storage.dialog_option_txt())
             print "closed"
             if add_file != '':
@@ -67,20 +66,20 @@ class ConfigController(Controller):
                                                               -3:] != 'stl' else storage.project_stl_folder
 
                 if not os.path.exists(join(folder_dst, os.path.split(add_file)[1])):
-                    # print "Coping " + add_file +" to " + global_vars.project_points_folder + "/"+self.get_filename_from_path(add_file)
-
+                    # print "Coping " + add_file +" to " + global_vars.project_points_folder
+                    # + "/"+self.get_filename_from_path(add_file)
                     copy2(add_file, storage.project_points_folder)
                     add_file = join(folder_dst, storage.get_filename_from_path(add_file)).replace("\\", "/")
                 else:
                     add_file = join(folder_dst, os.path.split(add_file)[1]).replace("\\", "/")
 
                 if add_file and add_file[-3:] != 'stl':
-                    if not add_file in storage.files_opened:
+                    if add_file not in storage.files_opened:
                         storage.files_opened.append(add_file)
                         self.set_entry(add_file)
                         self.page.txt_list.insert(0, add_file)
                 else:
-                    if not add_file in storage.created_stl:
+                    if add_file not in storage.created_stl:
                         storage.created_stl.append(add_file)
                         self.set_entry(add_file)
                         # self.stlList.insert(0, self.get_filename_from_path(add_file))
@@ -93,7 +92,8 @@ class ConfigController(Controller):
             else:
                 showerror("Nie wybrano pliku", "Prosze wskazać plik do otwarcia")
 
-    def add_file_stl(self):
+    @staticmethod
+    def add_file_stl():
         add_file = tkFileDialog.askopenfilename(**storage.dialog_option_stl())
         if add_file != '':
             storage.copy_file(add_file)
@@ -110,7 +110,7 @@ class ConfigController(Controller):
             print "Select file to convert"
 
     def switch_to_abaqus_page(self):
-        if self.page.stl_list.curselection() and storage.DEBUG == False:
+        if self.page.stl_list.curselection() and not storage.DEBUG:
             for item in self.page.stl_list.curselection():
                 from plugin.utils.abaqus import stl_to_abaqus
                 stl_to_abaqus(self.page.stl_list.get(item),
@@ -148,10 +148,10 @@ class StlController(Controller):
                 index = item - pos
                 storage.del_file_pcd(self.page.pcd_list.get(item))
                 self.page.pcd_list.delete(index, index)
-                pos = pos + 1
+                pos += 1
 
-    def add_file_pcd(self):
-
+    @staticmethod
+    def add_file_pcd():
         add_file = tkFileDialog.askopenfilename(**storage.dialog_option_pcd())
         if add_file != "":
             storage.add_to_pcd(add_file)
@@ -168,8 +168,8 @@ class StlController(Controller):
             for item in storage.import_stl_from_log():
                 storage.add_to_stl(item)
 
-    def back_page(self):
-        super(StlController, self).back_page("ConfigPage")
+    def back_page(self, page="ConfigPage"):
+        super(StlController, self).back_page(page)
 
     def pcd_listbox_focus(self, event):
         self.page.focus = event.widget

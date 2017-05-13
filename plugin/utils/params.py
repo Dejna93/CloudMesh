@@ -1,6 +1,7 @@
 import os
-import  pickle
-from xml.dom import minidom
+import pickle
+import ttk
+
 from collections import OrderedDict
 from plugin.utils.oso import join
 
@@ -15,51 +16,65 @@ class Singleton(type):
 
 
 class STLParams(object):
-
     __metaclass__ = Singleton
 
-    def __init__(self, *args, **kwargs):
-
-        for key , value in kwargs.items():
-            self.__dict__[key]=value
-
+    def __init__(self):
+        self.params = None
         self.load_param()
-        #pickle.dump(self.__dict__, open("stl_params.pl",'wb'))
+        # pickle.dump(self.__dict__, open("stl_params.pl",'wb'))
 
-
-    def getParams(self):
+    def get_parameters(self):
         return self.params
 
-    def getParamByKey(self, key):
+    def get_params_key(self, key):
         return self.params[key]
-
-    def load_param(self, path):
-        self.__dict__ = pickle.load(open(path, 'rb'))
-        self.params = OrderedDict(sorted(self.__dict__.items()))
 
     def load_param(self):
         # self.__dict__ = pickle.load(open("/home/dejna/PycharmProjects/CloudMesh/plugin/utils/stl_params.pl","rb"))
-        self.__dict__ = pickle.load(open(join(os.path.dirname(os.path.abspath(__file__)), "stl_params.pl"), "rb"))
+        self.__dict__ = pickle.load(open(join(os.path.dirname(os.path.abspath(__file__)), "stl_params.pl"), "r"))
         self.params = OrderedDict(sorted(self.__dict__.items()))
 
-    def set_param(self,key, value):
-        print "set_param" + key + " " + value
+        # def load_param(self, path):
+        #    self.__dict__ = pickle.load(open(path, 'rb'))
+        #    self.params = OrderedDict(sorted(self.__dict__.items()))
+
+    def set_param(self, key, value):
         self.params[key] = value
+
     """
     Save dict to params.ini to load in Cpp
     """
-    def save_params(self,filepath):
-        with open(filepath,'w') as file:
-            file.write("[STLParams]\n")
-            for key,value in self.params.items():
-                file.write(str(key)+"="+str(value)+"\n")
+
+    def save_params(self, filepath):
+        with open(filepath, 'w') as pickle_file:
+            pickle_file.write("[STLParams]\n")
+            for key, value in self.params.items():
+                pickle_file.write(str(key) + "=" + str(value) + "\n")
         return filepath
+
+
+class Setting(object):
+    def __init__(self, tree):
+        self.tree = tree
+        self.params = STLParams()
+        index = 1
+        for key, item in self.params.get_parameters().iteritems():
+            self.add_node("", index, str(index), key, (item,))
+            index += 1
+
+    @staticmethod
+    def load_from_pickle(self):
+        STLParams.get_parameters(self)
+
+    def add_node(self, parent, index, iid, name, value):
+        self.tree.insert(parent, index, iid, text=name, value=value)
 
 
 stlParams = STLParams()
 
 """
-stl = STLParams(visualisation=0,show_loaded=0,show_clustered=0,type_triangulation=0,savepcd=1,iterations=100,distance_threshold=0.1,scale=1.1,
+stl = STLParams(visualisation=0,show_loaded=0,show_clustered=0,type_triangulation=0,savepcd=1,
+iterations=100,distance_threshold=0.1,scale=1.1,
 cloud_multipler=1.5,
 cluster_tolerance=2,
 lap_max_iter=400000,

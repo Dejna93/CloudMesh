@@ -1,9 +1,10 @@
 import os.path
 import platform
 
+
 def join(path, *args):
     for arg in args:
-        path = os.path.join(path,arg)
+        path = os.path.join(path, arg)
     return clean_path(path)
 
 
@@ -13,25 +14,28 @@ def clean_path(path):
     else:
         return path.replace("//", "/")
 
+
 def change_ext(filename, ext):
-    path , old = os.path.splitext(filename)
+    path, old = os.path.splitext(filename)
     return path+ext
 
 
-def get_filename_from_path( filepath):
+def get_filename_from_path(filepath):
     import ntpath
     head, tail = ntpath.split(filepath)
     return tail
 
-def get(list , i):
+
+def get(arr, i):
     try:
-        return list[i]
+        return arr[i]
     except IndexError:
         return None
 
-def get_selection(list , i):
+
+def get_selection(arr, i):
     try:
-        return list[i]
+        return arr[i]
     except IndexError:
         return -1
 

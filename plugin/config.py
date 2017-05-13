@@ -4,46 +4,41 @@ import os
 from shutil import copy2
 from sys import version
 from plugin.utils.params import stlParams
-
+from plugin.utils.oso import join, clean_path
 if version[:3] >= '3':
     from PIL import Image, ImageTk
-from plugin.utils.oso import join, clean_path
+
 
 class Singelton(type):
-    def __init__(cls , name , bases , dict):
-        super(Singelton, cls).__init__(name,bases,dict)
+    def __init__(cls, name, bases, dict):
+        super(Singelton, cls).__init__(name, bases, dict)
         cls.instance = None
+
     def __call__(cls, *args, **kwargs):
         if cls.instance is None:
-            cls.instance = super(Singelton, cls).__call__(*args,**kwargs)
+            cls.instance = super(Singelton, cls).__call__(*args, **kwargs)
         return cls.instance
 
 
 class PluginConfig(object):
-
     __metaclass__ = Singelton
 
-    def __init__(self,*args, **kwargs):
-
-
-        for key, value in kwargs.iteritems():
-            self.__dict__[key] = value
+    def __init__(self):
 
         self.DEBUG = False
-        #wersja do ktorej sie pisalo
-        self.PYTHON_VERSION ='3'
+        # wersja do ktorej sie pisalo
+        self.PYTHON_VERSION = '3'
         self.window_width = 520
         self.window_height = 380
 
         self.dlab_width = 510
         self.dlab_height = 380
 
-
         self.plugin_dir = os.path.dirname(os.path.abspath(__file__))
 
-        self.workspace_dir = join(self.plugin_dir,"workspace")
+        self.workspace_dir = join(self.plugin_dir, "workspace")
 
-        self.current_project = join(self.plugin_dir,"workspace")
+        self.current_project = join(self.plugin_dir, "workspace")
 
         self.project_points_folder = ""
         self.project_stl_folder = ""
@@ -53,7 +48,7 @@ class PluginConfig(object):
             self.ico_btn_open = os.path.join(self.plugin_dir, "assets\\open.png")
         else:
             self.icon = ''
-            self.ico_btn_open =''
+            self.ico_btn_open = ''
         self.projects_dirs = []
 
         self.files_opened = []
@@ -83,12 +78,6 @@ class PluginConfig(object):
             if not os.path.isdir(self.workspace_dir):
                 raise
 
-    def setup_images(self):
-
-        if version[:3] >= self.PYTHON_VERSION:
-            self.img_open_btn = Image.open(self.ico_btn_open)
-            self.tk_img_open = ImageTk.PhotoImage(self.img_open_btn)
-
     def dump_vars(self):
         print "WORKSPACE DIR" + str(self.workspace_dir)
         print "PLUGIN DIR" + str(self.current_project)
@@ -98,89 +87,95 @@ class PluginConfig(object):
 
     def dump_last_project(self):
 
-        with open(os.path.join(self.workspace_dir,"plugin.ini"), "w") as file:
-            file.write("[!ProjectDir]\n")
-            file.write("dir={0}".format(self.current_project))
-            file.write("\n")
-            file.write("dirs=")
-            file.writelines(';'.join(self.projects_dirs))
-            file.close()
+        with open(os.path.join(self.workspace_dir, "plugin.ini"), "w") as plugin:
+            plugin.write("[!ProjectDir]\n")
+            plugin.write("dir={0}".format(self.current_project))
+            plugin.write("\n")
+            plugin.write("dirs=")
+            plugin.writelines(';'.join(self.projects_dirs))
+            plugin.close()
 
-        with open(join(self.current_project, "project.ini"), "w") as file:
+        with open(join(self.current_project, "project.ini"), "w") as project:
             print "dumping files" + str(self.files_opened)
-            file.write("[!ProjectDir]\n")
-            file.write("dir={0}\n".format(self.current_project))
-            file.write("[!PointsList]\n")
-            file.write("files=")
-            file.writelines(';'.join(self.files_opened))
-            file.write('\n')
-            file.write("[!StlList]\n")
-            file.write("stl=")
-            file.writelines(';'.join(self.created_stl))
-            file.close()
+            project.write("[!ProjectDir]\n")
+            project.write("dir={0}\n".format(self.current_project))
+            project.write("[!PointsList]\n")
+            project.write("files=")
+            project.writelines(';'.join(self.files_opened))
+            project.write('\n')
+            project.write("[!StlList]\n")
+            project.write("stl=")
+            project.writelines(';'.join(self.created_stl))
+            project.close()
 
     def init_project(self):
-        canContinue = True
+        can_continue = True
         print "INITIAL PROJECT\n\n"
         try:
-            with open(os.path.join(self.workspace_dir ,"plugin.ini"),"r") as file:
-                for line in file.readlines():
-                    print line
-                    if line[:4] =='dir=':
+            with open(os.path.join(self.workspace_dir, "plugin.ini"), "r") as plugin:
+                for line in plugin.readlines():
+                    # print line
+                    if line[:4] == 'dir=':
                         if os.path.exists(line[4:]):
-                            self.update_project_dir(line[4:].replace("\\","/"))
+                            self.update_project_dir(line[4:].replace("\\", "/"))
                         else:
-                            canContinue = False
+                            can_continue = False
                     if line[:5] == "dirs=":
-                        print line[5:]
-                        self.projects_dirs = line[5:].strip().replace("\\", "/").split(';')
-                        print self.projects_dirs
-                file.close()
+                        self.projects_dirs = self.convert_to_list(line[5:].strip().replace("\\", "/").split(';'))
+                        plugin.close()
         except EnvironmentError:
             print "Plugin.ini not found"
         try:
-            if canContinue:
-                with open(os.path.join( self.current_project ,"project.ini"),"r") as file:
-                    for line in file.readlines():
-                        if line[:6] =='files=' and len(line) != 6:
-                            self.files_opened = line[6:].strip().replace("\\","/").split(';')
-                            self.current_filename = self.files_opened[0].strip().replace("\\","/")
-                        if line[:4] =='stl=' and len(line) != 4 :
-                            self.current_stl = line[4:].strip().replace("\\","/").split(';')
+            if can_continue:
+                with open(os.path.join(self.current_project, "project.ini"), "r") as project:
+                    for line in project.readlines():
+                        if line[:6] == 'files=' and len(line) >= 6:
+                            self.files_opened = self.convert_to_list(line[6:].strip().replace("\\", "/").split(';'))
+                            self.current_filename = self.files_opened[0].strip().replace("\\", "/")
+                        if line[:4] == 'stl=' and len(line) >= 4:
+                            self.current_stl = self.convert_to_list(line[4:].strip().replace("\\", "/").split(';'))
                             self.current_stl = self.current_stl[0].strip()
-                            self.created_stl = line[4:].strip().replace("\\","/").split(';')
-                    file.close()
+                            self.created_stl = line[4:].strip().replace("\\", "/").split(';')
+                            project.close()
         except EnvironmentError:
             print "Project.ini not found or project dir doesnt exists"
 
     def load_assets(self):
         print self.current_project
-        with open(join(self.current_project, "project.ini"), "r") as file:
-            for line in file.readlines():
+        with open(join(self.current_project, "project.ini"), "r") as project:
+            for line in project.readlines():
                 line = line.replace("\n", "")
                 if line[:4] == 'dir=' and len(line) != 4:
                     self.update_project_dir(line[4:].replace("\\", "/"))
                 if line[:6] == 'files=' and len(line) != 6:
-                    self.files_opened = line[6:].strip().replace("\\", "/").split(';')
+                    self.files_opened = self.convert_to_list(line[6:].strip().replace("\\", "/").split(';'))
+
                     self.current_filename = self.files_opened[0].strip().replace("\\", "/")
                 if line[:4] == 'stl=' and len(line) != 4:
-                    self.current_stl = line[4:].strip().replace("\\", "/").split(';')
+                    self.current_stl = self.convert_to_list(line[4:].strip().replace("\\", "/").split(';'))
                     self.current_stl = self.current_stl[0].strip()
                     self.created_stl = line[4:].strip().replace("\\", "/").split(';')
-            file.close()
+            project.close()
 
-    def del_file_open(self,name,type):
+    @staticmethod
+    def convert_to_list(value):
+        if type(value) is list:
+            return value
+        elif type(value) is str and value != "":
+            return value.split()
+        return []
+
+    def del_file_open(self, name, file_type):
         """
         Usuwanie sciezki do pliku z listy plikow gotowych do procesu stla
         ze stringa w tkinterze
         """
-        print type
-        if type == 0:
+        if file_type == 0:
             for file_name in self.files_opened:
-                #print file_name[-len(name):] + " " + name
+                # print file_name[-len(name):] + " " + name
                 if file_name[-len(name):] == name:
                     self.files_opened.remove(file_name)
-        if type == 1:
+        if file_type == 1:
             for file_name in self.created_stl:
                 if file_name[-len(name):] == name:
                     self.created_stl.remove(file_name)
@@ -194,42 +189,40 @@ class PluginConfig(object):
             # print file_name[-len(name):] + " " + name
             if file_name[-len(name):] == name:
                 self.created_pcd.remove(file_name)
-        #print self.files_opened
+                # print self.files_opened
 
-    def get_opened_file_by_name(self, name, type):
+    def get_opened_file_by_name(self, name, ext):
 
-        if type =='txt':
+        if ext == 'txt':
             for file_name in self.files_opened:
                 if file_name[-len(name):] == name:
                     return file_name
-        elif type =='stl':
+        elif ext == 'stl':
             for file_name in self.created_stl:
                 if file_name[-len(name):] == name:
                     return file_name
         return ''
 
-    def update_currentfile(self,name):
+    def update_currentfile(self, name):
         if self.current_filename != name:
-            self.current_filename = self.get_opened_file_by_name(name,'txt')
+            self.current_filename = self.get_opened_file_by_name(name, 'txt')
 
-    def update_currentstl(self,name):
+    def update_currentstl(self, name):
         if self.current_stl != name:
             self.current_stl = self.get_opened_file_by_name(name, 'stl')
 
-
-
-    def update_project_dir(self,name):
+    def update_project_dir(self, name):
         self.current_project = name
-        self.project_points_folder = join(self.current_project,"points")
-        self.project_stl_folder = join(self.current_project,"stl")
-        #self.project_points_folder = os.path.join(self.current_project, "points").replace("\\","/")
-        #self.project_stl_folder = os.path.join(self.current_project, "stl").replace("\\","/")
-        print "UPDATE_DIR" + self.current_project
+        self.project_points_folder = join(self.current_project, "points")
+        self.project_stl_folder = join(self.current_project, "stl")
+        # self.project_points_folder = os.path.join(self.current_project, "points").replace("\\","/")
+        # self.project_stl_folder = os.path.join(self.current_project, "stl").replace("\\","/")
+        print "UPDATE_DIR " + self.current_project
         if os.path.exists(join(self.project_stl_folder, 'output.log')):
             os.remove(join(self.project_stl_folder, 'output.log'))
 
         stlParams.set_param("points", self.project_points_folder)
-        stlParams.set_param("stl",self.project_stl_folder)
+        stlParams.set_param("stl", self.project_stl_folder)
 
     def add_project(self):
         self.current_filename = ''
@@ -239,45 +232,46 @@ class PluginConfig(object):
         self.created_stl = []
         self.files_opened = []
 
-    def get_filename_from_path(self, filepath):
+    @staticmethod
+    def get_filename_from_path(filepath):
         import ntpath
         head, tail = ntpath.split(filepath)
         return tail
 
-    def is_same_list(self, list , build_list):
+    def is_same_list(self, arr, build_list):
         for item in build_list:
-            if not self.contains(item, list):
+            if not self.contains(item, arr):
                 return False
         return True
 
     # ONLY FOR TRANSLATE LISTBOX TO LIST
-    def contains(self, name, list):
-        for item in list:
+    @staticmethod
+    def contains(name, arr):
+        for item in arr:
             if name == item:
                 return True
         return False
 
-    def get_items(self, list ,build_list):
+    def get_items(self, arr, build_list):
         new_list = []
         for item in build_list:
-            if not self.contains(item , list):
+            if not self.contains(item, arr):
                 new_list.append(item)
         return new_list
 
-
-    def update_project_params(self,project):
+    def update_project_params(self, project):
         self.current_project = project
-        self.project_points_folder =  join(self.current_project,"points")
-        self.project_stl_folder = join(self.current_project,"stl")
+        self.project_points_folder = join(self.current_project, "points")
+        self.project_stl_folder = join(self.current_project, "stl")
 
     def update_point_files(self, points_files):
-        #nadgraj obecne pliki
-        if isinstance(points_files , Iterable):
+        # nadgraj obecne pliki
+        if isinstance(points_files, Iterable):
             self.files_opened = []
-            for file in points_files:
-                if not file[-3:] in ('stl', 'pcd'):
-                    self.files_opened.append(file)
-            #self.files_opened = points_files
+            for pcd_file in points_files:
+                if not pcd_file[-3:] in ('stl', 'pcd'):
+                    self.files_opened.append(pcd_file)
+                    # self.files_opened = points_files
 
     def update_stl_files(self, stl_files):
 
@@ -287,11 +281,10 @@ class PluginConfig(object):
 
     def import_stl_from_log(self):
         stls = []
-        with open( join(self.project_stl_folder,'output.log')) as file:
-            for item in file.readlines():
+        with open(join(self.project_stl_folder, 'output.log')) as stl_file:
+            for item in stl_file.readlines():
                 stls.append(clean_path(item))
         return stls
-
 
     def add_to_stl(self, item):
         self.created_stl.append(clean_path(item))
@@ -306,37 +299,28 @@ class PluginConfig(object):
             return True
         return False
 
-    def dialog_option_txt(self):
-        options = {}
-        options['defaultextension'] = '.txt'
-        options['filetypes'] = [('Text files', '.txt'), ('Csv files', '.csv'), ('Point cloud data', '.pcd'),
-                                ('STL files', '.stl')]
-        options[
-            'initialdir'] = storage.current_project if storage.current_project != '' and storage.current_project != storage.workspace_dir else storage.workspace_dir
-        options['initialfile'] = ''
-        options['title'] = 'Open file to import'
+    @staticmethod
+    def dialog_option_txt():
+        options = {'defaultextension': '.txt',
+                   'filetypes': [('Text files', '.txt'), ('Csv files', '.csv'), ('Point cloud data', '.pcd'),
+                                 ('STL files', '.stl')],
+                   'initialdir': storage.current_project if storage.current_project != '' and
+                                                            storage.current_project != storage.workspace_dir
+                   else storage.workspace_dir,
+                   'initialfile': '', 'title': 'Open file to import'}
 
         return options
 
     def dialog_option_stl(self):
-        options = {}
-        options['defaultextension'] = '.stl'
-        options['initialfile'] = ''
-        options['title'] = 'Open file to import'
-        options['filetypes'] = [('STL files', '.stl')]
-        options['initialdir'] = self.project_stl_folder
-        options['title'] = 'Add Stl to project'
+        options = {'defaultextension': '.stl', 'initialfile': '', 'title': 'Add Stl to project',
+                   'filetypes': [('STL files', '.stl')], 'initialdir': self.project_stl_folder}
 
         return options
 
-    def dialog_option_pcd(self):
-        options = {}
-        options['defaultextension'] = '.stl'
-        options['initialfile'] = ''
-        options['title'] = 'Open file'
-        options['filetypes'] = [('PCD files', '.pcd')]
-        options['initialdir'] = storage.project_points_folder
-        options['title'] = 'Add PCD to project'
+    @staticmethod
+    def dialog_option_pcd():
+        options = {'defaultextension': '.stl', 'initialfile': '', 'title': 'Add PCD to project',
+                   'filetypes': [('PCD files', '.pcd')], 'initialdir': storage.project_points_folder}
         return options
 
     def clear_storage(self):

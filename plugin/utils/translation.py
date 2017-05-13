@@ -1,6 +1,4 @@
 from xml.dom.minidom import parse
-import xml.dom.minidom
-
 from plugin.utils.oso import join
 from plugin.config import storage
 
@@ -12,8 +10,8 @@ class Translation(object):
         # self.getDictByCategory("PoissonPage")
 
     def load_strings(self, filepath):
-        stringXml = parse(filepath)
-        strings = stringXml.documentElement.getElementsByTagName("string")
+        string_xml = parse(filepath)
+        strings = string_xml.documentElement.getElementsByTagName("string")
         loaded_string = {}
         for string in strings:
             key = string.getElementsByTagName("key")[0].childNodes[0].data
@@ -24,7 +22,7 @@ class Translation(object):
         # print loaded_string
         return loaded_string
 
-    def getDictByCategory(self, category):
+    def get_dict_by_category(self, category):
         result = {}
         for key, value in self.strings.items():
             if value[0] == category:
@@ -32,7 +30,7 @@ class Translation(object):
                 # print result
         return result
 
-    def getValueByKey(self, key):
+    def get_value_by_key(self, key):
         value = self.strings.get(key, None)
         if value:
             return value[1]
