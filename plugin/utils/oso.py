@@ -20,6 +20,11 @@ def change_ext(filename, ext):
     return path+ext
 
 
+def get_ext(filename):
+    path, ext = os.path.splitext(filename)
+    return ext
+
+
 def get_filename_from_path(filepath):
     import ntpath
     head, tail = ntpath.split(filepath)

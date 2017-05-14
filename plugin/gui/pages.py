@@ -4,7 +4,7 @@ import ttk
 from plugin.config import storage
 from plugin.utils.inputs import input_validator
 from plugin.utils.oso import get_selection
-from plugin.gui.controllers import ConfigController, StlController
+from plugin.gui.controllers import ConfigController, StlController, OptionController
 from plugin.utils.params import stlParams, Setting
 from plugin.utils.translation import Translation
 
@@ -56,6 +56,8 @@ class ConfigPage(Page):
         self.controller = controller
         # global_vars.dump_vars()
         self.cls = ConfigController(self)
+
+        print storage.files_opened
 
         self.focus_stl = None
         self.focus_txt = None
@@ -126,7 +128,10 @@ class ConfigPage(Page):
     # TODO check correct
     @staticmethod
     def fill_listbox(listbox, arr):
+        print arr
+        listbox.delete(0, tk.END)
         if arr:
+            print arr
             for files in arr:
                 listbox.insert(tk.END, files)
 
@@ -140,12 +145,12 @@ class ConfigPage(Page):
             self.stl_list.delete(0, tk.END)
             for item in sorted(storage.created_stl):
                 self.stl_list.insert(tk.END, item)
-
         if self.focus_txt:
             self.txt_list.selection_set(get_selection(self.txt_list.curselection(), 0))
         if self.focus_stl:
             self.stl_list.selection_set(get_selection(self.stl_list.curselection(), 0))
         super(ConfigPage, self).update()
+
 
 
 class STLPage(Page):
@@ -160,20 +165,25 @@ class STLPage(Page):
         self.pcdFrame = tk.LabelFrame(self, text="PCD Files", width=storage.dlab_width, padx=10, pady=10)
         self.pcdFrame.grid(row=1, column=0, columnspan=4, sticky="WE", padx=10, pady=10)
 
+        self.profile_combo = ttk.Combobox(label_frame, width=80)
+        self.profile_combo.bind("<<ComboboxSelected>>", self.combo_selection)
+        self.profile_combo['values'] = tuple(storage.profile_saved)
+        self.profile_combo.current(self.combo_sel())
+        self.profile_combo.grid(row=0, column=0, columnspan=5, sticky="N")
         self.buttons = []
 
         # self.labels.append(tk.Label(label_frame, text="Greedy Triangulation"))
 
-        self.buttons.append(tk.Button(label_frame, text="General", width=35, command=lambda: self.change_option(0)))
+        self.buttons.append(tk.Button(label_frame, text="General", width=30, command=lambda: self.change_option(0)))
         self.buttons.append(
-            tk.Button(label_frame, text="Laplacian Triangulation", width=35, command=lambda: self.change_option(1)))
+            tk.Button(label_frame, text="Laplacian Triangulation", width=30, command=lambda: self.change_option(1)))
         self.buttons.append(
-            tk.Button(label_frame, text="Poisson Triangulation", width=35, command=lambda: self.change_option(2)))
+            tk.Button(label_frame, text="Poisson Triangulation", width=30, command=lambda: self.change_option(2)))
         #  self.buttons.append(tk.Button(label_frame, text="Option", command=lambda: self.change_option(3)))
 
         for i in range(0, len(self.buttons)):
             # self.labels[i].grid(row = i + 1 , column=0, sticky="W")
-            self.buttons[i].grid(row=i + 1, column=0, columnspan=2, sticky="W")
+            self.buttons[i].grid(row=i + 1, column=1, columnspan=2, sticky="WE")
 
         self.checkInt = tk.IntVar()
         self.checkInt.set(0)
@@ -197,15 +207,17 @@ class STLPage(Page):
         self.focus = None
 
         # BTN
-        button_1 = tk.Button(label_frame, text="Make STL", width=15, command=self.cls.run_external_exec)
-        button_2 = tk.Button(label_frame, text="Back", width=15, command=self.cls.back_page)
+        btn_frame = tk.Frame(label_frame)
+        btn_frame.grid(row=10, column=1, sticky="SWE", padx=10, pady=10, ipadx=5, ipady=5)
+        button_1 = tk.Button(btn_frame, text="Make STL", width=30, command=self.cls.run_external_exec)
+        button_2 = tk.Button(btn_frame, text="Back", width=30, command=self.cls.back_page)
 
         del_btn = tk.Button(self.pcdFrame, text="Delete", width=15, command=self.cls.delete_item)
         del_btn.grid(row=2, column=1, sticky="E")
         add_btn = tk.Button(self.pcdFrame, text="Add", width=15, command=self.cls.add_file_pcd)
         add_btn.grid(row=2, column=2, sticky="E")
-        button_1.grid(row=10, column=0, sticky="W")
-        button_2.grid(row=10, column=1, sticky="E")
+        button_1.grid(row=10, column=1, sticky="E")
+        button_2.grid(row=10, column=2, sticky="E")
 
         self.update()
 
@@ -231,6 +243,19 @@ class STLPage(Page):
 
         # self.after(1000,self.update)
 
+    def combo_selection(self, event):
+        value = self.profile_combo.get()
+        storage.current_profile = value
+        stlParams.load_param(value)
+        print value
+
+    def combo_sel(self):
+        try:
+            index = storage.profile_saved.index(storage.current_profile)
+            return index
+        except ValueError:
+            return 0
+
     def change_option(self, page_id):
         if page_id == 0:
             self.controller.show_frame("OptionPage")
@@ -248,33 +273,47 @@ class OptionPage(Page):
         self.controller = controller
         self.labelFrame = tk.LabelFrame(self, text="Main options for cpp", width=storage.dlab_width,
                                         height=storage.dlab_height, padx=10, pady=10)
-        self.labelFrame.grid(row=0, column=0, sticky="NWSE", padx=10, pady=10, ipadx=5, ipady=5)
+        self.labelFrame.grid(row=1, column=0, sticky="NWSE", padx=10, pady=10, ipadx=5, ipady=5)
 
         self.option_dict = Translation().get_dict_by_category("OptionPage")
         self.options = {}
-
+        profileframe = tk.Frame(self)
+        profileframe.grid(row=0, column=0, sticky="NWE", padx=10, pady=10, ipadx=5, ipady=5)
+        label_profile = tk.Label(profileframe, text="Current profile")
+        label_profile.grid(row=0, column=0, sticky="NE")
+        self.profile_entry = tk.Entry(profileframe, width=80)
+        self.profile_entry.grid(row=0, column=1, sticky="NE")
+        if self.profile_entry.get() == '' and storage.current_profile == '':
+            self.profile_entry.insert(0, storage.profile_saved[0])
         for key, value in self.option_dict.items():
             self.options[key] = [tk.Label(self.labelFrame, text=value), tk.Entry(self.labelFrame)]
+        self.fill_params()
 
+        # BTN
+        button_1 = tk.Button(self.labelFrame, text="Done", command=self.save_inputs)
+        button_2 = tk.Button(self.labelFrame, text="Back", command=lambda: controller.show_frame("STLPage"))
+        button_3 = tk.Button(self.labelFrame, text="Save to profile", command=self.save_to_profile)
+        button_1.grid(row=len(self.options) + 1, column=1, sticky="W")
+        button_2.grid(row=len(self.options) + 1, column=0, sticky="W")
+
+    def fill_params(self):
         i = 0
         for key, value in self.options.items():
+            print value
             self.options[key][0].grid(row=i + 1, column=0, sticky="W")
             self.options[key][1].grid(row=i + 1, column=1, sticky="W")
             self.options[key][1].insert(tk.END, stlParams.get_params_key(key))
             self.options[key][1].bind("<KeyPress>", input_validator)
             i += 1
 
-        # BTN
-        button_1 = tk.Button(self.labelFrame, text="Done", command=self.save_inputs)
-        button_2 = tk.Button(self.labelFrame, text="Back", command=lambda: controller.show_frame("STLPage"))
-
-        button_1.grid(row=len(self.options) + 1, column=1, sticky="W")
-        button_2.grid(row=len(self.options) + 1, column=0, sticky="W")
-
     def save_inputs(self):
         for key, value in self.options.items():
             stlParams.set_param(key, value[1].get())
         self.show_correct_triangulation(stlParams.get_params_key("type_triangulation"))
+
+    def save_to_profile(self):
+        print "Saving to profile"
+        stlParams.save_profile(storage.current_profile)
 
     def show_correct_triangulation(self, page_id):
         if page_id == "0":
@@ -286,6 +325,12 @@ class OptionPage(Page):
         else:
             print "Wrong type triangulation [0-2]!"
 
+    def update(self):
+        if self.profile_entry.get() != storage.current_profile and storage.current_profile != '':
+            self.profile_entry.delete(0, tk.END)
+            self.profile_entry.insert(0, storage.current_profile)
+        super(OptionPage, self).update()
+
 
 class LaplacianPage(Page):
     def __init__(self, parent, controller):
@@ -293,8 +338,15 @@ class LaplacianPage(Page):
         self.controller = controller
         self.labelFrame = tk.LabelFrame(self, text="Laplacian VTK params", width=storage.dlab_width,
                                         height=storage.dlab_height, padx=10, pady=10)
-        self.labelFrame.grid(row=0, column=0, sticky="NWSE", padx=10, pady=10, ipadx=5, ipady=5)
-
+        self.labelFrame.grid(row=1, column=0, sticky="NWSE", padx=10, pady=10, ipadx=5, ipady=5)
+        profileframe = tk.Frame(self)
+        profileframe.grid(row=0, column=0, sticky="NWE", padx=10, pady=10, ipadx=5, ipady=5)
+        label_profile = tk.Label(profileframe, text="Current profile")
+        label_profile.grid(row=0, column=0, sticky="NE")
+        self.profile_entry = tk.Entry(profileframe, width=80)
+        self.profile_entry.grid(row=0, column=1, sticky="NE")
+        if self.profile_entry.get() == '' and storage.current_profile == '':
+            self.profile_entry.insert(0, storage.profile_saved[0])
         self.options = {}
 
         self.laplacian_dict = Translation().get_dict_by_category("PoissonPage")
@@ -329,8 +381,15 @@ class PoissonPage(Page):
         self.controller = controller
         self.labelFrame = tk.LabelFrame(self, text="Poisson params", width=storage.dlab_width,
                                         height=storage.dlab_height, padx=10, pady=10)
-        self.labelFrame.grid(row=0, column=0, sticky="NWSE", padx=10, pady=10, ipadx=5, ipady=5)
-
+        self.labelFrame.grid(row=1, column=0, sticky="NWSE", padx=10, pady=10, ipadx=5, ipady=5)
+        profileframe = tk.Frame(self)
+        profileframe.grid(row=0, column=0, sticky="NWE", padx=10, pady=10, ipadx=5, ipady=5)
+        label_profile = tk.Label(profileframe, text="Current profile")
+        label_profile.grid(row=0, column=0, sticky="NE")
+        self.profile_entry = tk.Entry(profileframe, width=80)
+        self.profile_entry.grid(row=0, column=1, sticky="NE")
+        if self.profile_entry.get() == '' and storage.current_profile == '':
+            self.profile_entry.insert(0, storage.profile_saved[0])
         self.poisson_dict = Translation().get_dict_by_category("PoissonPage")
 
         self.options = {}
@@ -415,8 +474,16 @@ class AbaqusPage(Page):
 class SettingsPage(Page):
     def __init__(self, parent, controller):
         Page.__init__(self, parent)
+        self.cls = OptionController(self)
         self.controller = controller
-        self.tree = ttk.Treeview(self)
+        self.labelFrame = tk.LabelFrame(self, text="MeshTriangulation parameters", width=storage.dlab_width,
+                                        height=storage.dlab_height, padx=10, pady=10)
+        self.labelFrame.grid(row=0, column=0, sticky="NWSE", padx=10, pady=10, ipadx=5, ipady=5)
+
+        self.label_1 = tk.Label(self.labelFrame, text="Current parameter profile").grid(row=0, column=0, sticky="NW")
+        self.current_profile_entry = tk.Entry(self.labelFrame, bd=2, width=80)
+        self.current_profile_entry.grid(row=0, column=1, sticky="NW")
+        self.tree = ttk.Treeview(self.labelFrame)
         self.settings = Setting(self.tree)
         self.tree.bind('<<TreeviewSelect>>', self.on_tree_select)
 
@@ -425,24 +492,57 @@ class SettingsPage(Page):
         self.tree.column("value", width=300)
         self.tree.heading("value", text="Value")
 
-        self.edit_btn = tk.Button(self, text="Edit")
-        self.del_btn = tk.Button(self, text="Del")
-        self.tree.pack(fill=tk.BOTH)
-        self.edit_btn.pack(side=tk.LEFT, expand=1, fill=tk.X)
-        self.del_btn.pack(side=tk.RIGHT, expand=1, fill=tk.X)
+        self.edit_btn = tk.Button(self.labelFrame, text="Edit", command=self.cls.edit_item)
+        self.del_btn = tk.Button(self.labelFrame, text="Save", command=self.cls.save_profile)
+        self.back_btn = tk.Button(self.labelFrame, text="Back", command=lambda: controller.show_frame("ConfigPage"))
+        self.tree.grid(row=1, column=0, sticky="NWE", columnspan=2, rowspan=3, padx=5, pady=5)
+        self.edit_btn.grid(row=1, column=2, sticky="E")
+        self.del_btn.grid(row=2, column=2, sticky="E")
+        self.back_btn.grid(row=3, column=2, sticky="E")
 
+        self.labelFrame2 = tk.LabelFrame(self, text="Parameters profiles", width=storage.dlab_width,
+                                         height=storage.dlab_height, padx=10, pady=10)
+        self.labelFrame2.grid(row=1, column=0, sticky="SWE", padx=10, pady=10, ipadx=5, ipady=5)
+        self.subFrame = tk.LabelFrame(self.labelFrame2, padx=10, pady=10)
+        self.subFrame.grid(row=1, column=1, sticky="NSE")
+        self.add_profile = tk.Button(self.subFrame, text="Create profile", command=self.cls.add_profile)
+        self.open_profile = tk.Button(self.subFrame, text="Open profile", command=self.cls.open_profile)
+        self.edit_profile = tk.Button(self.subFrame, text="Edit profile", command=self.cls.edit_profile)
+        self.del_profile = tk.Button(self.subFrame, text="Delete profile", command=self.cls.delete_profile)
+        self.restore_profile = tk.Button(self.subFrame, text="Default profile", command=self.cls.default_profile)
+        self.add_profile.grid(row=0, column=0, sticky="NE")
+        self.open_profile.grid(row=0, column=1, sticky="NE")
+        self.edit_profile.grid(row=0, column=2, sticky="NE")
+        self.del_profile.grid(row=0, column=3, sticky="NE")
+        self.restore_profile.grid(row=0, column=4, sticky="NE")
+
+        self.focus_profile = None
+        self.profil_scrollbar = tk.Scrollbar(self.labelFrame2)
+        self.profil_list = tk.Listbox(self.labelFrame2, listvariable=storage.files_opened,
+                                      yscrollcommand=self.profil_scrollbar.set, width=90)
+        self.profil_scrollbar.config(command=self.profil_list.yview)
+        self.profil_list.grid(row=2, column=0, rowspan=1, columnspan=3, sticky="NWE", pady=10)
+        self.profil_scrollbar.grid(row=2, column=5, sticky="E")
+        self.profil_list.bind("<FocusIn>", self.cls.profil_listbox_focused)
+        self.profil_list.bind("<FocusOut>", self.cls.profil_listbox_unfocused)
+        self.profil_list.bind("<Double-Button-1>", self.cls.select_listbox_profil)
+        # self.fill_listbox(self.profil_list, storage.files_opened)
         # self.tree.insert("",1,"cos",text="123123",value=(123,11))
         # id2 = self.tree.insert("", 1, "dir2", text="Dir 2")
         # self.tree.insert(id2, "end", "dir 2", text="sub dir 2", values=("2A", "2B"))
 
     def on_tree_select(self, event):
-        print event
-        for item in self.tree.selection():
-            # item_text = self.tree.item(item,"text")
-            text = self.tree.item(item)
-            print text
-            self.edit_item(text, item)
+        pass
 
-    def edit_item(self, item, index):
-        item['value'] = '0.4'
-        self.tree.set(index, item)
+    def update(self):
+        if not storage.is_same_list(self.profil_list.get(0, tk.END), storage.profile_saved):
+            save_selection = self.profil_list.curselection()
+            self.profil_list.delete(0, tk.END)
+            for item in sorted(storage.profile_saved):
+                self.profil_list.insert(tk.END, item)
+            if not save_selection:
+                self.profil_list.selection_set(first=0)
+            else:
+                self.profil_list.selection_set(save_selection)
+            self.profil_list.event_generate("<<ListboxSelect>>")
+        super(SettingsPage, self).update()

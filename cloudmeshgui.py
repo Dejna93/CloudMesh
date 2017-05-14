@@ -13,8 +13,8 @@ class App(tk.Tk):
         tk.Tk.wm_title(self, storage.title)
         self.protocol("WM_DELETE_WINDOW", self.quit)
 
-        container = tk.Frame(self)
-        container.grid(row=0, column=0)
+        self.container = tk.Frame(self)
+        self.container.grid(row=0, column=0)
 
         self.menubar = tk.Menu(self)
         self.file_menu = tk.Menu(self.menubar, tearoff=0)
@@ -40,22 +40,46 @@ class App(tk.Tk):
         self.menubar.add_cascade(label="Option", menu=self.option_menu)
         self.menubar.add_cascade(label="Help", menu=self.help_menu)
         self.config(menu=self.menubar)
-        self.frames = {}
+        self.frames = []
 
-        for F in (StartPage, ConfigPage, STLPage, AbaqusPage, OptionPage, LaplacianPage, PoissonPage, SettingsPage):
+        self.pages = (StartPage, ConfigPage, STLPage, AbaqusPage, OptionPage, LaplacianPage, PoissonPage, SettingsPage)
+        """for F in self.pages:
             page_name = F.__name__
-            frame = F(parent=container, controller=self)
+            frame = F(parent=self.container, controller=self)
             self.frames[page_name] = frame
             frame.grid(row=0, column=0, sticky="nsew")
-
+        """
         self.show_frame("StartPage")
 
     def show_frame(self, cont):
+        for F in self.pages:
+            if F.__name__ == cont:
+                # print F.__name__
+                frame = F(parent=self.container, controller=self)
+                self.del_frame()
+                self.frames.append(frame)
+                frame.grid(row=0, column=0, sticky="NSWE")
+                frame.update()
+                frame.event_generate("<<ShowFrame>>")
+
+    def del_frame(self):
+        if self.frames:
+            old = self.frames[0]
+            old.destroy()
+            del self.frames[:]
+
+    """
+    def show_frame(self, cont):
         frame = self.frames[cont]
+        if cont == "OptionPage":
+            del frame
+            frame = OptionPage(parent=self.container, controller=self)
+            self.frames[cont] = frame
+            frame.grid(row=0, column=0, sticky="nsew")
         frame.tkraise()
         frame.update()
         frame.event_generate("<<ShowFrame>>")
-
+    """
     def quit(self):
         storage.dump_last_project()
         self.destroy()

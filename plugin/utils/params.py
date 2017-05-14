@@ -20,7 +20,7 @@ class STLParams(object):
 
     def __init__(self):
         self.params = None
-        self.load_param()
+        self.init_params()
         # pickle.dump(self.__dict__, open("stl_params.pl",'wb'))
 
     def get_parameters(self):
@@ -29,14 +29,19 @@ class STLParams(object):
     def get_params_key(self, key):
         return self.params[key]
 
-    def load_param(self):
+    def load_param(self, path):
+        with open(path, 'r') as file:
+            self.__dict__ = pickle.load(file)
+            self.params = OrderedDict(sorted(self.__dict__.items()))
+            return self.params
+
+    def init_params(self):
+        print "init param"
         # self.__dict__ = pickle.load(open("/home/dejna/PycharmProjects/CloudMesh/plugin/utils/stl_params.pl","rb"))
-        self.__dict__ = pickle.load(open(join(os.path.dirname(os.path.abspath(__file__)), "stl_params.pl"), "r"))
+        self.__dict__ = pickle.load(open(join(os.path.dirname(os.path.abspath(__file__)), "default.pl"), "r"))
         self.params = OrderedDict(sorted(self.__dict__.items()))
 
-        # def load_param(self, path):
-        #    self.__dict__ = pickle.load(open(path, 'rb'))
-        #    self.params = OrderedDict(sorted(self.__dict__.items()))
+
 
     def set_param(self, key, value):
         self.params[key] = value
@@ -52,15 +57,27 @@ class STLParams(object):
                 pickle_file.write(str(key) + "=" + str(value) + "\n")
         return filepath
 
+    def save_profile(self, profile):
+        with open(profile, 'w') as handle:
+            pickle.dump(self.params, handle)
 
 class Setting(object):
     def __init__(self, tree):
         self.tree = tree
         self.params = STLParams()
+        self.relaod_tree(self.params.get_parameters())
+
+    def relaod_tree(self, params):
+        x = self.tree.get_children()
+        if x != '()':
+            for child in x:
+                self.tree.delete(child)
+
         index = 1
-        for key, item in self.params.get_parameters().iteritems():
+        for key, item in params.iteritems():
             self.add_node("", index, str(index), key, (item,))
             index += 1
+
 
     @staticmethod
     def load_from_pickle(self):

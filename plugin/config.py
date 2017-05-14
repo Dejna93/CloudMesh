@@ -39,7 +39,7 @@ class PluginConfig(object):
         self.workspace_dir = join(self.plugin_dir, "workspace")
 
         self.current_project = join(self.plugin_dir, "workspace")
-
+        self.profile_folder = join(self.workspace_dir, "profiles")
         self.project_points_folder = ""
         self.project_stl_folder = ""
 
@@ -61,6 +61,10 @@ class PluginConfig(object):
 
         self.stl_param = []
 
+        self.current_profile = ""
+        self.profile_saved = []
+        self.default_profile = join(os.path.dirname(os.path.abspath(__file__)), "utils/default.pl")
+        self.profile_saved.append(self.default_profile)
         self.nodeTolerance = "1E-006"
 
         self.setup_workspace()
@@ -94,7 +98,9 @@ class PluginConfig(object):
             plugin.write("dirs=")
             plugin.writelines(';'.join(self.projects_dirs))
             plugin.close()
-
+        with open(join(self.workspace_dir, "profiles.ini"), "w") as profile:
+            profile.writelines("\n".join(self.profile_saved))
+            profile.close()
         with open(join(self.current_project, "project.ini"), "w") as project:
             print "dumping files" + str(self.files_opened)
             project.write("[!ProjectDir]\n")
@@ -126,6 +132,16 @@ class PluginConfig(object):
         except EnvironmentError:
             print "Plugin.ini not found"
         try:
+            with open(join(self.workspace_dir, "profiles.ini"), "r") as profiles:
+                for line in profiles.readlines():
+                    print line
+                    profile = line.strip().replace("\\", "/")
+                    if not profile in self.profile_saved:
+                        self.profile_saved.append(profile)
+                profiles.close()
+        except EnvironmentError:
+            print "Profiles.ini not found"
+        try:
             if can_continue:
                 with open(os.path.join(self.current_project, "project.ini"), "r") as project:
                     for line in project.readlines():
@@ -141,6 +157,7 @@ class PluginConfig(object):
             print "Project.ini not found or project dir doesnt exists"
 
     def load_assets(self):
+        print "load_assets"
         print self.current_project
         with open(join(self.current_project, "project.ini"), "r") as project:
             for line in project.readlines():
@@ -149,7 +166,6 @@ class PluginConfig(object):
                     self.update_project_dir(line[4:].replace("\\", "/"))
                 if line[:6] == 'files=' and len(line) != 6:
                     self.files_opened = self.convert_to_list(line[6:].strip().replace("\\", "/").split(';'))
-
                     self.current_filename = self.files_opened[0].strip().replace("\\", "/")
                 if line[:4] == 'stl=' and len(line) != 4:
                     self.current_stl = self.convert_to_list(line[4:].strip().replace("\\", "/").split(';'))
@@ -238,6 +254,12 @@ class PluginConfig(object):
         head, tail = ntpath.split(filepath)
         return tail
 
+    @staticmethod
+    def get_filepath_from_path(filepath):
+        import ntpath
+        head, tail = ntpath.split(filepath)
+        return head
+
     def is_same_list(self, arr, build_list):
         for item in build_list:
             if not self.contains(item, arr):
@@ -292,6 +314,10 @@ class PluginConfig(object):
     def add_to_pcd(self, item):
         self.created_pcd.append(clean_path(item))
 
+    def add_to_profile(self, item):
+        print item
+        self.profile_saved.append(clean_path(item))
+
     def copy_file(self, filepath):
         folder_dst = self.project_points_folder if filepath[-3:] != 'stl' else self.project_stl_folder
         if not os.path.exists(join(folder_dst, os.path.split(filepath)[1])):
@@ -321,6 +347,12 @@ class PluginConfig(object):
     def dialog_option_pcd():
         options = {'defaultextension': '.stl', 'initialfile': '', 'title': 'Add PCD to project',
                    'filetypes': [('PCD files', '.pcd')], 'initialdir': storage.project_points_folder}
+        return options
+
+    @staticmethod
+    def dialog_option_profile():
+        options = {'defaultextension': '.pl', 'initialfile': '', 'title': 'Add profile to project',
+                   'filetypes': [('Profile files', '.pl')], 'initialdir': storage.profile_folder}
         return options
 
     def clear_storage(self):

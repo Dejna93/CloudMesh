@@ -54,7 +54,8 @@ def open_project(root):
 
 
 def open_lastest_project(filepath):
-    if filepath in storage.projects_dirs:
+    print filepath
+    if filepath in storage.projects_dirs and filepath != storage.current_filename:
         storage.update_project_dir(filepath)
         storage.load_assets()
     else:

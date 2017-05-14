@@ -6,11 +6,12 @@ import tkFileDialog
 import Tkinter as tk
 from shutil import copy2
 from sys import platform
-from tkMessageBox import showerror
+from tkMessageBox import showerror, askyesnocancel
 from plugin.config import storage
-from plugin.utils.oso import join, clean_path
+from plugin.utils.oso import join, clean_path, change_ext
 from plugin.utils.converter import convert_txt_to_pcd, convert_csv_to_pcd
 from plugin.utils.params import stlParams
+
 
 
 class Controller(object):
@@ -184,3 +185,170 @@ class AppController(Controller):
 
     def view(self, frame):
         self.page.controller.show_frame(frame)
+
+
+class OptionController(Controller):
+    def __init__(self, page):
+        Controller.__init__(self, page)
+
+    def add_profile(self):
+        add_profile = tk.Toplevel(self.page, width=300, height=300)
+        add_profile.wm_geometry("300x100")
+        add_profile.title("New profile")
+        frame = tk.Frame(add_profile)
+        frame.pack()
+        bottom = tk.Frame(add_profile)
+        bottom.pack(side=tk.BOTTOM)
+        label = tk.Label(frame, text="Name profile")
+        label.pack(side=tk.LEFT)
+        entry = tk.Entry(frame)
+        entry.pack(side=tk.LEFT)
+        btn = tk.Button(bottom, text="Save", command=lambda: self.save_new_profile(add_profile, entry))
+        btn.pack(side=tk.BOTTOM, expand=1, fill=tk.X)
+        # add_profile = tkFileDialog.askopenfilename(**storage.dialog_option_profile())
+        # if add_profile != "":
+        #   print add_profile
+        #  storage.add_to_profile(add_profile)
+
+    def save_new_profile(self, window, entry):
+        print entry.get()
+        new_name = entry.get()
+        if new_name != '':
+            if new_name[3:] != ".pl":
+                new_name = "%s%s" % (new_name, '.pl')
+                print new_name
+            print storage.default_profile
+            print storage.profile_folder
+            try:
+                copy2(storage.default_profile, storage.profile_folder)
+            except EnvironmentError:
+                print "Error happended"
+            else:
+                print "OK"
+
+            old_file = storage.get_filename_from_path(storage.default_profile)
+            print old_file
+            old_file = join(storage.profile_folder, old_file)
+            print old_file
+            new_file = join(storage.profile_folder, new_name)
+            os.rename(old_file, new_file)
+            storage.add_to_profile(new_file)
+            print storage.profile_saved
+
+        window.destroy()
+
+    def open_profile(self):
+        add_file = tkFileDialog.askopenfilename(**storage.dialog_option_profile())
+        if add_file != "":
+            print add_file
+            storage.add_to_profile(add_file)
+
+    def edit_profile(self):
+        self.page.settings.relaod_tree(stlParams.load_param(storage.current_profile))
+
+    def delete_profile(self):
+        if storage.current_profile != '':
+            if storage.current_profile[-10:] == 'default.pl':
+                print "WARING YOU CANNOT REMOVE DEFUALT PROFILE"
+            elif askyesnocancel("Remove profile", "Do you want to remove those profile?"):
+                try:
+                    os.remove(storage.current_profile)
+                except OSError, e:
+                    print "Error: %s - %s." % (e.filename, e.strerror)
+
+                storage.profile_saved.remove(storage.current_profile)
+                print storage.profile_saved
+                storage.current_profile = ""
+
+    def default_profile(self):
+        self.page.settings.relaod_tree(stlParams.load_param(storage.default_profile))
+        storage.current_profile = ""
+        self.page.current_profile_entry.delete(0, tk.END)
+
+    def profil_listbox_focused(self, event):
+        self.page.focus_profile = event.widget
+
+    def profil_listbox_unfocused(self, event):
+        self.page.focus_profile = None
+
+    def select_listbox_profil(self, event):
+        if self.page.focus_profile:
+            widget = event.widget
+            if len(widget.curselection()) != 0:
+                # storage.update_currentfile(widget.get(widget.curselection()[0]))
+                print widget.get(widget.curselection()[0])
+                storage.current_profile = widget.get(widget.curselection()[0])
+                self.page.current_profile_entry.delete(0, tk.END)
+                self.page.current_profile_entry.insert(0, storage.current_profile)
+                # self.set_entry(widget.curselection()[0])  # global.current
+
+    def set_entry(self, text):
+        self.page.current_profile_entry.delete(0, tk.END)
+        self.page.current_profile_entry.insert(0, text)
+
+    def stl_listbox_focused(self, event):
+        self.page.focus_stl = event.widget
+
+    def stl_listbox_unfocused(self, event):
+        self.page.focus_stl = None
+
+    def edit_item(self):
+        print self.page.tree.item(self.page.tree.selection())
+
+        widget = tk.Toplevel(self.page, width=300, height=300)
+        x = (widget.winfo_screenwidth() / 2) - (storage.window_width / 2)
+        y = (widget.winfo_screenheight() / 2) - (storage.window_height / 2)
+        widget.geometry('%dx%d+%d+%d' % (storage.window_width, storage.window_height, x, y))
+        widget.wm_geometry("250x70")
+        widget.title("Edit parametr")
+        frame = tk.Frame(widget)
+        frame.pack()
+        bottom = tk.Frame(widget)
+        bottom.pack(side=tk.BOTTOM)
+        label = tk.Label(frame, text=self.page.tree.item(self.page.tree.selection())["text"])
+        label.pack(side=tk.LEFT)
+        entry = tk.Entry(frame)
+        entry.insert(0, self.page.tree.item(self.page.tree.selection())["values"][0])
+        entry.pack(side=tk.LEFT)
+        btn = tk.Button(bottom, text="Save", command=lambda: self.save_editable_item(widget, entry))
+        btn.pack(side=tk.BOTTOM, expand=1, fill=tk.X)
+
+    def save_editable_item(self, widget, entry):
+        id_item = self.page.tree.selection()
+        value = entry.get()
+        validate = False
+        if self.is_int(value):
+            value = int(value)
+            validate = True
+        elif self.is_float(value):
+            value = float(value)
+            validate = True
+        if validate:
+            self.page.tree.item(id_item, values=value)
+            key = self.page.tree.item(id_item)["text"]
+            stlParams.params[key] = value
+            # stlParams.params[key] = value
+        else:
+            print "Wrong type !!!"
+        widget.destroy()
+
+    @staticmethod
+    def is_int(string):
+        try:
+            int(string)
+            return True
+        except ValueError:
+            return False
+
+    @staticmethod
+    def is_float(string):
+        try:
+            float(string)
+            return True
+        except ValueError:
+            return False
+
+    def save_profile(self):
+        print stlParams.params
+        if storage.current_profile != '':
+            stlParams.save_profile(storage.current_profile)
