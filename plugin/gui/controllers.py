@@ -40,7 +40,6 @@ class ConfigController(Controller):
                 storage.update_currentstl(widget.get(widget.curselection()[0]))
 
     def delete_item(self):
-        print "ss"
         if not self.page.focus_txt:
             pass
         if not self.page.focus_stl:

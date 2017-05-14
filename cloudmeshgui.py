@@ -1,5 +1,6 @@
 # coding=UTF-8
 import Tkinter as tk
+import Queue
 from plugin.utils.project import Project, add_project, open_project, clear_project, open_lastest_project
 from plugin.config import storage
 # pages
@@ -41,7 +42,7 @@ class App(tk.Tk):
         self.menubar.add_cascade(label="Help", menu=self.help_menu)
         self.config(menu=self.menubar)
         self.frames = []
-
+        self.q_frames = Queue.Queue()
         self.pages = (StartPage, ConfigPage, STLPage, AbaqusPage, OptionPage, LaplacianPage, PoissonPage, SettingsPage)
         """for F in self.pages:
             page_name = F.__name__
@@ -57,16 +58,17 @@ class App(tk.Tk):
                 # print F.__name__
                 frame = F(parent=self.container, controller=self)
                 self.del_frame()
-                self.frames.append(frame)
+                self.q_frames.put(frame)
+                # self.frames.append(frame)
                 frame.grid(row=0, column=0, sticky="NSWE")
                 frame.update()
                 frame.event_generate("<<ShowFrame>>")
 
     def del_frame(self):
-        if self.frames:
-            old = self.frames[0]
+        if not self.q_frames.empty():
+            old = self.q_frames.get()
             old.destroy()
-            del self.frames[:]
+            #del self.frames[:]
 
     """
     def show_frame(self, cont):
