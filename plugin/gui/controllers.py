@@ -351,3 +351,13 @@ class OptionController(Controller):
         print stlParams.params
         if storage.current_profile != '':
             stlParams.save_profile(storage.current_profile)
+
+    def info_action(self):
+        print self.page.tree.item(self.page.tree.selection())
+        try:
+            from plugin.utils.translation import translation
+            from plugin.utils import view
+        except ImportError:
+            translation = None
+        if translation != None:
+            popup = view.PopFrame(parent=self.page, title="Test")

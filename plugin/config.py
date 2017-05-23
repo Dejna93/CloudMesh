@@ -101,18 +101,22 @@ class PluginConfig(object):
         with open(join(self.workspace_dir, "profiles.ini"), "w") as profile:
             profile.writelines("\n".join(self.profile_saved))
             profile.close()
-        with open(join(self.current_project, "project.ini"), "w") as project:
-            print "dumping files" + str(self.files_opened)
-            project.write("[!ProjectDir]\n")
-            project.write("dir={0}\n".format(self.current_project))
-            project.write("[!PointsList]\n")
-            project.write("files=")
-            project.writelines(';'.join(self.files_opened))
-            project.write('\n')
-            project.write("[!StlList]\n")
-            project.write("stl=")
-            project.writelines(';'.join(self.created_stl))
-            project.close()
+        # FIX Dumping project into workspace
+        if self.current_project != self.workspace_dir:
+            with open(join(self.current_project, "project.ini"), "w") as project:
+                print "dumping files" + str(self.files_opened)
+                project.write("[!ProjectDir]\n")
+                project.write("dir={0}\n".format(self.current_project))
+                project.write("[!PointsList]\n")
+                project.write("files=")
+                project.writelines(';'.join(self.files_opened))
+                project.write('\n')
+                project.write("[!StlList]\n")
+                project.write("stl=")
+                project.writelines(';'.join(self.created_stl))
+                project.close()
+        else:
+            print "Project dir is the same as workspace dir!"
 
     def init_project(self):
         can_continue = True
@@ -136,7 +140,7 @@ class PluginConfig(object):
                 for line in profiles.readlines():
                     print line
                     profile = line.strip().replace("\\", "/")
-                    if not profile in self.profile_saved:
+                    if not profile in self.profile_saved and profile != self.default_profile:
                         self.profile_saved.append(profile)
                 profiles.close()
         except EnvironmentError:

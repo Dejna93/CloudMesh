@@ -495,10 +495,12 @@ class SettingsPage(Page):
         self.edit_btn = tk.Button(self.labelFrame, text="Edit", command=self.cls.edit_item)
         self.del_btn = tk.Button(self.labelFrame, text="Save", command=self.cls.save_profile)
         self.back_btn = tk.Button(self.labelFrame, text="Back", command=lambda: controller.show_frame("ConfigPage"))
+        self.info_btn = tk.Button(self.labelFrame, text="Info", command=self.cls.info_action)
         self.tree.grid(row=1, column=0, sticky="NWE", columnspan=2, rowspan=3, padx=5, pady=5)
         self.edit_btn.grid(row=1, column=2, sticky="E")
         self.del_btn.grid(row=2, column=2, sticky="E")
         self.back_btn.grid(row=3, column=2, sticky="E")
+        self.info_btn.grid(row=4, column=2, sticky="E")
 
         self.labelFrame2 = tk.LabelFrame(self, text="Parameters profiles", width=storage.dlab_width,
                                          height=storage.dlab_height, padx=10, pady=10)
