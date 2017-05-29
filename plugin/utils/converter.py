@@ -32,27 +32,23 @@ def convert_csv_to_pcd(filename, csv_type='T'):
                 temp = list(row)
                 if len(temp) == 3:
                     csv_type = 'N'
-                if csv_type == 'T':
+                if len(temp) == 4 and csv_type == 'T':
                     if temp[-1] in data:
                         data[temp[-1]].append(temp[0:3])
                     else:
                         data[temp[-1]] = [temp[0:3]]
                 else:
                     data["0"].append(temp[0:3])
-
         finally:
             csv_file.close()
         if data:
             # TODO dodanie pytania czy rozbijac na fazy czy nie ?
             for key, value in data.iteritems():
                 folder, tail = os.path.split(filename)
-                # file_pcd = filename[:-4] + str(key) + ".pcd"
                 file_pcd = join(folder, "".join((os.path.splitext(tail)[0], key, ".pcd")))
                 storage.created_pcd.append(file_pcd)
                 pcdheader(file_pcd, len(value))
                 write_data(file_pcd, value)
-                print file_pcd
-                # TODO dodanie do files_pcd
 
     return filename
 
